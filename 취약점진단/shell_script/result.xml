@@ -1,0 +1,4578 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Unix>
+<U-1>
+<Name> root 계정 원격접속 제한 </Name>
+<Security_Threat>
+root 계정은 운영체제의 모든기능을 설정 및 변경이 가능하여^(프로세스, 커
+널변경 등^) root 계정을 탈취하여 외부에서 원격을 이용한 시스템 장악 및
+각종 공격으로(무작위 대입 공격) 인한 root 계정 사용 불가 위협
+</Security_Threat>
+<Data> <![CDATA[
+#cat /etc/pam.d/login | grep -o -i pam_securetty.so | grep -v # ^*
+pam_securetty.so
+
+#/etc/securetty | grep -i pts | grep -v # ^*
+
+#cat /etc/sshd_config | grep -i PermitRootLogin yes | grep -v # ^*
+
+]]> </Data>
+<Comment>
+[양호] : 원격 터미널 서비스를 사용하지 않거나, 사용 시 root 직접 접속을 차단한 경우
+[취약] : 원격 터미널 서비스 사용 시 root 직접 접속을 허용한 경우
+</Comment>
+<Result>
+[양호] : 원격 터미널 서비스를 사용하지 않거나, 사용 시 root 직접 접속을 차단한 경우
+</Result>
+</U-1>
+
+<U-2>
+<Name> 패스워드 복잡성 설정 </Name>
+<Security_Threat>
+ 복잡성 설정이 되어있지 않은 패스워드는 사회공학적인 유추가 가능 할 수
+있으며 암호화된 패스워드 해시값을 무작위 대입공격, 사전대입 공격 등으로
+단시간에 패스워드 크렉이 가능함 
+</Security_Threat>
+<Data> <![CDATA[
+#cat /etc/security/pwquality.conf | grep -E  echo lcredit|ucredit|dcredit|ocredit|minlen|difok 
+# difok = 5
+# minlen = 9
+# dcredit = 1
+# ucredit = 1
+# lcredit = 1
+# ocredit = 1
+
+]]> </Data>
+<Comment>
+[양호] : 패스워드 최소길이 8자리 이상, 영문·숫자·특수문자 최소 입력 기능이 설정된 경우
+[취약] : 패스워드 최소길이 8자리 이상, 영문·숫자·특수문자 최소 입력 기능이 설정된 경우
+lcredit=-1 최소 소문자 요구 소문자, 최소 1자 이상 요구
+ucredit=-1 최소 대문자 요구, 최소 대문자 1자 이상 요구
+dcredit=-1 최소 숫자 요구, 최소 숫자 1자 이상 요구
+ocredit=-1 최소 특수문자 요구, 최소 특수문자 1자 이상 요구
+minlen=8 최소 패스워드 길이 설정, 최소 8자리 이상 설정
+difok=N 기존 패스워드와 비교, 기본값 10(50%))
+</Comment>
+<Result>
+[취약] : 패스워드 최소길이 8자리 이상, 영문·숫자·특수문자 최소 입력 기능이 설정된 경우
+</Result>
+</U-2>
+
+<U-3>
+<Name> 계정 잠금 임계값 설정 </Name>
+<Security_Threat>
+패스워드 탈취 공격(무작위 대입 공격, 사전 대입 공격, 추측 공격 등)의 인증
+요청에 대해 설정된 패스워드와 일치 할 때까지 지속적으로 응답하여 해당
+계정의 패스워드가 유출 될 수 있음
+</Security_Threat>
+<Data> <![CDATA[
+#cat /etc/pam.d/system-auth | grep "pam_tally2.so" | grep -v "# ^*"
+auth	    required	  pam_tally2.so deny=5 unlock_time=120 no_magic_root
+account     required      pam_tally2.so no_magic_root reset
+
+]]> </Data>
+<Comment>
+[양호] : 계정 잠금 임계값이 10회 이하의 값으로 설정되어 있는 경우
+[취약] : 계정 잠금 임계값이 설정되어 있지 않거나, 10회 이하의 값으로 설정되지 않은 경우
+</Comment>
+<Result>
+[양호] : 계정 잠금 임계값이 10회 이하의 값으로 설정되어 있는 경우
+</Result>
+</U-3>
+
+<U-4>
+<Name> 패스워드 파일 보호 </Name>
+<Security_Threat>
+사용자 계정 패스워드가 저장된 파일이 유출 또는 탈취 시 평문으로 저장된
+패스워드 정보가 노출될 수 있음
+</Security_Threat>
+<Data> <![CDATA[
+#/etc/shadow
+/etc/shadow
+
+#cat /etc/passwd | grep 'root' | awk -F ':' '{print }'
+x
+
+]]> </Data>
+<Comment>
+[양호] : 쉐도우 패스워드를 사용하거나, 패스워드를 암호화하여 저장하는 경우
+[취약] : 쉐도우 패스워드를 사용하지 않고, 패스워드를 암호화하여 저장하지 않는 경우
+</Comment>
+<Result>
+[양호] : 쉐도우 패스워드를 사용하거나, 패스워드를 암호화하여 저장하는 경우
+</Result>
+</U-4>
+
+<U-5>
+<Name> root홈, 패스 디렉터리 권한 및 패스 설정 </Name>
+<Security_Threat>
+root 계정의 PATH(환경변수)에 정상적인 관리자 명령어(예: ls, mv, cp등)의
+디렉터리 경로 보다 현재 디렉터리를 지칭하는 “.” 표시가 우선하면 현재
+디렉터리에 변조된 명령어를 삽입하여 관리자 명령어 입력 시 악의적인
+기능이 실행 될 수 있음
+</Security_Threat>
+<Data> <![CDATA[
+#echo /usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin:/root/bin
+/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin:/root/bin
+]]> </Data>
+<Comment>
+[양호] : PATH 환경변수에 “.” 이 맨 앞이나 중간에 포함되지 않은 경우
+[취약] : PATH 환경변수에 “.” 이 맨 앞이나 중간에 포함되어 있는 경우
+</Comment>
+<Result>
+[양호] : PATH 환경변수에 “.” 이 맨 앞이나 중간에 포함되지 않은 경우
+</Result>
+</U-5>
+
+<U-6>
+<Name> 파일 및 디렉터리 소유자 설정 </Name>
+<Security_Threat>
+소유자가 존재하지 않는 파일의 UID와 동일한 값으로 특정계정의 UID값을
+변경하면 해당 파일의 소유자가 되어 모든 작업이 가능함
+</Security_Threat>
+<Data> <![CDATA[
+#find / -nouser -print 2>/dev/nul
+find: ‘/proc/62992’: No such file or directory
+find: ‘/proc/63191/task/63191/fd/5’: No such file or directory
+find: ‘/proc/63191/task/63191/fdinfo/5’: No such file or directory
+find: ‘/proc/63191/fd/6’: No such file or directory
+find: ‘/proc/63191/fdinfo/6’: No such file or directory
+/proc/70969
+/proc/70969/task
+/proc/70969/task/70969
+/proc/70969/task/70969/net
+/proc/70969/task/70969/attr
+/proc/70969/net
+/proc/70969/attr
+/run/sm-client.pid
+/var/spool/mail/teste1
+/var/spool/mail/teste
+/var/spool/clientmqueue
+/var/spool/clientmqueue/sm-client.st
+/var/spool/clientmqueue/df16KAbUBq085168
+/var/spool/clientmqueue/Qf16KAbUBq085168
+/var/spool/clientmqueue/df16KAcIBE085316
+/var/spool/clientmqueue/Qf16KAcIBE085316
+/tmp/.esd-1002
+/tmp/tracker-extract-files.1002
+/home/teste1
+/home/teste1/.mozilla
+/home/teste1/.mozilla/extensions
+/home/teste1/.mozilla/plugins
+/home/teste1/.bash_logout
+/home/teste1/.bash_profile
+/home/teste1/.bashrc
+/home/teste1/.cache
+/home/teste1/.cache/gdm
+/home/teste1/.cache/gdm/session.log
+/home/teste1/.cache/imsettings
+/home/teste1/.cache/imsettings/log
+/home/teste1/.cache/libgweather
+/home/teste1/.cache/evolution
+/home/teste1/.cache/evolution/addressbook
+/home/teste1/.cache/evolution/addressbook/trash
+/home/teste1/.cache/evolution/calendar
+/home/teste1/.cache/evolution/calendar/trash
+/home/teste1/.cache/evolution/mail
+/home/teste1/.cache/evolution/mail/trash
+/home/teste1/.cache/evolution/memos
+/home/teste1/.cache/evolution/memos/trash
+/home/teste1/.cache/evolution/sources
+/home/teste1/.cache/evolution/sources/trash
+/home/teste1/.cache/evolution/tasks
+/home/teste1/.cache/evolution/tasks/trash
+/home/teste1/.cache/gnome-shell
+/home/teste1/.cache/gnome-shell/update-check-3.28
+/home/teste1/.cache/abrt
+/home/teste1/.cache/abrt/applet_dirlist
+/home/teste1/.cache/abrt/lastnotification
+/home/teste1/.cache/event-sound-cache.tdb.52faa913a51e4151bcc69f1dc48bca45.x86_64-redhat-linux-gnu
+/home/teste1/.cache/tracker
+/home/teste1/.cache/tracker/db-version.txt
+/home/teste1/.cache/tracker/meta.db
+/home/teste1/.cache/tracker/db-locale.txt
+/home/teste1/.cache/tracker/meta.db-wal
+/home/teste1/.cache/tracker/meta.db-shm
+/home/teste1/.cache/tracker/ontologies.gvdb
+/home/teste1/.cache/tracker/parser-sha1.txt
+/home/teste1/.cache/tracker/locale-for-miner-user-guides.txt
+/home/teste1/.cache/tracker/locale-for-miner-apps.txt
+/home/teste1/.cache/tracker/last-crawl.txt
+/home/teste1/.cache/tracker/first-index.txt
+/home/teste1/.cache/gstreamer-1.0
+/home/teste1/.cache/gstreamer-1.0/registry.x86_64.bin
+/home/teste1/.cache/flatpak
+/home/teste1/.cache/flatpak/system-cache
+/home/teste1/.cache/yelp
+/home/teste1/.cache/yelp/WebKitCache
+/home/teste1/.cache/yelp/WebKitCache/Version 16
+/home/teste1/.cache/yelp/WebKitCache/Version 16/salt
+/home/teste1/.cache/yelp/WebKitCache/Version 16/Blobs
+/home/teste1/.cache/media-art
+/home/teste1/.cache/gnome-software
+/home/teste1/.cache/gnome-software/shell-extensions
+/home/teste1/.cache/gnome-software/odrs
+/home/teste1/.cache/gnome-software/odrs/ratings.json
+/home/teste1/.dbus
+/home/teste1/.dbus/session-bus
+/home/teste1/.dbus/session-bus/52faa913a51e4151bcc69f1dc48bca45-0
+/home/teste1/.config
+/home/teste1/.config/imsettings
+/home/teste1/.config/gnome-session
+/home/teste1/.config/gnome-session/saved-session
+/home/teste1/.config/pulse
+/home/teste1/.config/pulse/52faa913a51e4151bcc69f1dc48bca45-device-volumes.tdb
+/home/teste1/.config/pulse/52faa913a51e4151bcc69f1dc48bca45-stream-volumes.tdb
+/home/teste1/.config/pulse/52faa913a51e4151bcc69f1dc48bca45-card-database.tdb
+/home/teste1/.config/pulse/cookie
+/home/teste1/.config/pulse/52faa913a51e4151bcc69f1dc48bca45-default-sink
+/home/teste1/.config/pulse/52faa913a51e4151bcc69f1dc48bca45-default-source
+/home/teste1/.config/ibus
+/home/teste1/.config/ibus/bus
+/home/teste1/.config/ibus/bus/52faa913a51e4151bcc69f1dc48bca45-unix-0
+/home/teste1/.config/evolution
+/home/teste1/.config/evolution/sources
+/home/teste1/.config/evolution/sources/system-proxy.source
+/home/teste1/.config/dconf
+/home/teste1/.config/dconf/user
+/home/teste1/.config/goa-1.0
+/home/teste1/.config/user-dirs.dirs
+/home/teste1/.config/user-dirs.locale
+/home/teste1/.config/gconf
+/home/teste1/.config/gtk-3.0
+/home/teste1/.config/gtk-3.0/bookmarks
+/home/teste1/.config/abrt
+/home/teste1/.config/nautilus
+/home/teste1/.config/nautilus/desktop-metadata
+/home/teste1/.config/gnome-initial-setup-done
+/home/teste1/.config/yelp
+/home/teste1/.config/yelp/yelp.cfg
+/home/teste1/.ICEauthority
+/home/teste1/.local
+/home/teste1/.local/share
+/home/teste1/.local/share/keyrings
+/home/teste1/.local/share/keyrings/login.keyring
+/home/teste1/.local/share/keyrings/user.keystore
+/home/teste1/.local/share/gnome-shell
+/home/teste1/.local/share/evolution
+/home/teste1/.local/share/evolution/addressbook
+/home/teste1/.local/share/evolution/addressbook/trash
+/home/teste1/.local/share/evolution/addressbook/system
+/home/teste1/.local/share/evolution/addressbook/system/contacts.db
+/home/teste1/.local/share/evolution/addressbook/system/photos
+/home/teste1/.local/share/evolution/calendar
+/home/teste1/.local/share/evolution/calendar/trash
+/home/teste1/.local/share/evolution/calendar/system
+/home/teste1/.local/share/evolution/calendar/system/calendar.ics
+/home/teste1/.local/share/evolution/mail
+/home/teste1/.local/share/evolution/mail/trash
+/home/teste1/.local/share/evolution/memos
+/home/teste1/.local/share/evolution/memos/trash
+/home/teste1/.local/share/evolution/tasks
+/home/teste1/.local/share/evolution/tasks/trash
+/home/teste1/.local/share/telepathy
+/home/teste1/.local/share/telepathy/mission-control
+/home/teste1/.local/share/telepathy/mission-control/accounts.cfg
+/home/teste1/.local/share/telepathy/mission-control/accounts-goa.cfg
+/home/teste1/.local/share/gsettings-data-convert
+/home/teste1/.local/share/sounds
+/home/teste1/.local/share/applications
+/home/teste1/.local/share/icc
+/home/teste1/.local/share/gnome-settings-daemon
+/home/teste1/.local/share/gnome-settings-daemon/input-sources-converted
+/home/teste1/.local/share/flatpak
+/home/teste1/.local/share/flatpak/db
+/home/teste1/.local/share/flatpak/repo
+/home/teste1/.local/share/flatpak/repo/config
+/home/teste1/.local/share/flatpak/repo/tmp
+/home/teste1/.local/share/flatpak/repo/tmp/cache
+/home/teste1/.local/share/flatpak/repo/extensions
+/home/teste1/.local/share/flatpak/repo/state
+/home/teste1/.local/share/flatpak/repo/refs
+/home/teste1/.local/share/flatpak/repo/refs/heads
+/home/teste1/.local/share/flatpak/repo/refs/mirrors
+/home/teste1/.local/share/flatpak/repo/refs/remotes
+/home/teste1/.local/share/flatpak/repo/objects
+/home/teste1/.local/share/flatpak/.changed
+/home/teste1/.local/share/tracker
+/home/teste1/.local/share/tracker/data
+/home/teste1/.local/share/tracker/data/tracker-store.journal
+/home/teste1/.local/share/tracker/data/tracker-store.ontology.journal
+/home/teste1/.local/share/gvfs-metadata
+/home/teste1/.local/share/gvfs-metadata/home
+/home/teste1/.local/share/gvfs-metadata/root
+/home/teste1/.local/share/gvfs-metadata/home-03de7668.log
+/home/teste1/.local/share/gvfs-metadata/root-e4fa05e2.log
+/home/teste1/.local/share/nautilus
+/home/teste1/.local/share/nautilus/scripts
+/home/teste1/.local/share/webkitgtk
+/home/teste1/.local/share/webkitgtk/deviceidhashsalts
+/home/teste1/.local/share/webkitgtk/deviceidhashsalts/1
+/home/teste1/.local/share/webkitgtk/databases
+/home/teste1/.local/share/webkitgtk/databases/indexeddb
+/home/teste1/.local/share/webkitgtk/databases/indexeddb/v1
+/home/teste1/.local/share/webkitgtk/localstorage
+/home/teste1/.esd_auth
+/home/teste1/Desktop
+/home/teste1/Desktop/test.txt
+/home/teste1/Downloads
+/home/teste1/Templates
+/home/teste1/Public
+/home/teste1/Documents
+/home/teste1/Music
+/home/teste1/Pictures
+/home/teste1/Videos
+/home/teste1/.viminfo
+/home/teste1/.bash_history
+/home/teste
+/home/teste/.mozilla
+/home/teste/.mozilla/extensions
+/home/teste/.mozilla/plugins
+/home/teste/.bash_logout
+/home/teste/.bash_profile
+/home/teste/.bashrc
+
+#find / -nogroup -print 2>/dev/nul
+find: ‘/proc/63233/task/63233/fd/5’: No such file or directory
+find: ‘/proc/63233/task/63233/fdinfo/5’: No such file or directory
+find: ‘/proc/63233/fd/6’: No such file or directory
+find: ‘/proc/63233/fdinfo/6’: No such file or directory
+/proc/70969
+/proc/70969/task
+/proc/70969/task/70969
+/proc/70969/task/70969/net
+/proc/70969/task/70969/attr
+/proc/70969/net
+/proc/70969/attr
+/run/sm-client.pid
+/var/spool/mail/teste1
+/var/spool/mail/teste
+/var/spool/clientmqueue
+/var/spool/clientmqueue/sm-client.st
+/var/spool/clientmqueue/df16KAbUBq085168
+/var/spool/clientmqueue/Qf16KAbUBq085168
+/var/spool/clientmqueue/df16KAcIBE085316
+/var/spool/clientmqueue/Qf16KAcIBE085316
+/tmp/.esd-1002
+/tmp/tracker-extract-files.1002
+/home/teste1
+/home/teste1/.mozilla
+/home/teste1/.mozilla/extensions
+/home/teste1/.mozilla/plugins
+/home/teste1/.bash_logout
+/home/teste1/.bash_profile
+/home/teste1/.bashrc
+/home/teste1/.cache
+/home/teste1/.cache/gdm
+/home/teste1/.cache/gdm/session.log
+/home/teste1/.cache/imsettings
+/home/teste1/.cache/imsettings/log
+/home/teste1/.cache/libgweather
+/home/teste1/.cache/evolution
+/home/teste1/.cache/evolution/addressbook
+/home/teste1/.cache/evolution/addressbook/trash
+/home/teste1/.cache/evolution/calendar
+/home/teste1/.cache/evolution/calendar/trash
+/home/teste1/.cache/evolution/mail
+/home/teste1/.cache/evolution/mail/trash
+/home/teste1/.cache/evolution/memos
+/home/teste1/.cache/evolution/memos/trash
+/home/teste1/.cache/evolution/sources
+/home/teste1/.cache/evolution/sources/trash
+/home/teste1/.cache/evolution/tasks
+/home/teste1/.cache/evolution/tasks/trash
+/home/teste1/.cache/gnome-shell
+/home/teste1/.cache/gnome-shell/update-check-3.28
+/home/teste1/.cache/abrt
+/home/teste1/.cache/abrt/applet_dirlist
+/home/teste1/.cache/abrt/lastnotification
+/home/teste1/.cache/event-sound-cache.tdb.52faa913a51e4151bcc69f1dc48bca45.x86_64-redhat-linux-gnu
+/home/teste1/.cache/tracker
+/home/teste1/.cache/tracker/db-version.txt
+/home/teste1/.cache/tracker/meta.db
+/home/teste1/.cache/tracker/db-locale.txt
+/home/teste1/.cache/tracker/meta.db-wal
+/home/teste1/.cache/tracker/meta.db-shm
+/home/teste1/.cache/tracker/ontologies.gvdb
+/home/teste1/.cache/tracker/parser-sha1.txt
+/home/teste1/.cache/tracker/locale-for-miner-user-guides.txt
+/home/teste1/.cache/tracker/locale-for-miner-apps.txt
+/home/teste1/.cache/tracker/last-crawl.txt
+/home/teste1/.cache/tracker/first-index.txt
+/home/teste1/.cache/gstreamer-1.0
+/home/teste1/.cache/gstreamer-1.0/registry.x86_64.bin
+/home/teste1/.cache/flatpak
+/home/teste1/.cache/flatpak/system-cache
+/home/teste1/.cache/yelp
+/home/teste1/.cache/yelp/WebKitCache
+/home/teste1/.cache/yelp/WebKitCache/Version 16
+/home/teste1/.cache/yelp/WebKitCache/Version 16/salt
+/home/teste1/.cache/yelp/WebKitCache/Version 16/Blobs
+/home/teste1/.cache/media-art
+/home/teste1/.cache/gnome-software
+/home/teste1/.cache/gnome-software/shell-extensions
+/home/teste1/.cache/gnome-software/odrs
+/home/teste1/.cache/gnome-software/odrs/ratings.json
+/home/teste1/.dbus
+/home/teste1/.dbus/session-bus
+/home/teste1/.dbus/session-bus/52faa913a51e4151bcc69f1dc48bca45-0
+/home/teste1/.config
+/home/teste1/.config/imsettings
+/home/teste1/.config/gnome-session
+/home/teste1/.config/gnome-session/saved-session
+/home/teste1/.config/pulse
+/home/teste1/.config/pulse/52faa913a51e4151bcc69f1dc48bca45-device-volumes.tdb
+/home/teste1/.config/pulse/52faa913a51e4151bcc69f1dc48bca45-stream-volumes.tdb
+/home/teste1/.config/pulse/52faa913a51e4151bcc69f1dc48bca45-card-database.tdb
+/home/teste1/.config/pulse/cookie
+/home/teste1/.config/pulse/52faa913a51e4151bcc69f1dc48bca45-default-sink
+/home/teste1/.config/pulse/52faa913a51e4151bcc69f1dc48bca45-default-source
+/home/teste1/.config/ibus
+/home/teste1/.config/ibus/bus
+/home/teste1/.config/ibus/bus/52faa913a51e4151bcc69f1dc48bca45-unix-0
+/home/teste1/.config/evolution
+/home/teste1/.config/evolution/sources
+/home/teste1/.config/evolution/sources/system-proxy.source
+/home/teste1/.config/dconf
+/home/teste1/.config/dconf/user
+/home/teste1/.config/goa-1.0
+/home/teste1/.config/user-dirs.dirs
+/home/teste1/.config/user-dirs.locale
+/home/teste1/.config/gconf
+/home/teste1/.config/gtk-3.0
+/home/teste1/.config/gtk-3.0/bookmarks
+/home/teste1/.config/abrt
+/home/teste1/.config/nautilus
+/home/teste1/.config/nautilus/desktop-metadata
+/home/teste1/.config/gnome-initial-setup-done
+/home/teste1/.config/yelp
+/home/teste1/.config/yelp/yelp.cfg
+/home/teste1/.ICEauthority
+/home/teste1/.local
+/home/teste1/.local/share
+/home/teste1/.local/share/keyrings
+/home/teste1/.local/share/keyrings/login.keyring
+/home/teste1/.local/share/keyrings/user.keystore
+/home/teste1/.local/share/gnome-shell
+/home/teste1/.local/share/evolution
+/home/teste1/.local/share/evolution/addressbook
+/home/teste1/.local/share/evolution/addressbook/trash
+/home/teste1/.local/share/evolution/addressbook/system
+/home/teste1/.local/share/evolution/addressbook/system/contacts.db
+/home/teste1/.local/share/evolution/addressbook/system/photos
+/home/teste1/.local/share/evolution/calendar
+/home/teste1/.local/share/evolution/calendar/trash
+/home/teste1/.local/share/evolution/calendar/system
+/home/teste1/.local/share/evolution/calendar/system/calendar.ics
+/home/teste1/.local/share/evolution/mail
+/home/teste1/.local/share/evolution/mail/trash
+/home/teste1/.local/share/evolution/memos
+/home/teste1/.local/share/evolution/memos/trash
+/home/teste1/.local/share/evolution/tasks
+/home/teste1/.local/share/evolution/tasks/trash
+/home/teste1/.local/share/telepathy
+/home/teste1/.local/share/telepathy/mission-control
+/home/teste1/.local/share/telepathy/mission-control/accounts.cfg
+/home/teste1/.local/share/telepathy/mission-control/accounts-goa.cfg
+/home/teste1/.local/share/gsettings-data-convert
+/home/teste1/.local/share/sounds
+/home/teste1/.local/share/applications
+/home/teste1/.local/share/icc
+/home/teste1/.local/share/gnome-settings-daemon
+/home/teste1/.local/share/gnome-settings-daemon/input-sources-converted
+/home/teste1/.local/share/flatpak
+/home/teste1/.local/share/flatpak/db
+/home/teste1/.local/share/flatpak/repo
+/home/teste1/.local/share/flatpak/repo/config
+/home/teste1/.local/share/flatpak/repo/tmp
+/home/teste1/.local/share/flatpak/repo/tmp/cache
+/home/teste1/.local/share/flatpak/repo/extensions
+/home/teste1/.local/share/flatpak/repo/state
+/home/teste1/.local/share/flatpak/repo/refs
+/home/teste1/.local/share/flatpak/repo/refs/heads
+/home/teste1/.local/share/flatpak/repo/refs/mirrors
+/home/teste1/.local/share/flatpak/repo/refs/remotes
+/home/teste1/.local/share/flatpak/repo/objects
+/home/teste1/.local/share/flatpak/.changed
+/home/teste1/.local/share/tracker
+/home/teste1/.local/share/tracker/data
+/home/teste1/.local/share/tracker/data/tracker-store.journal
+/home/teste1/.local/share/tracker/data/tracker-store.ontology.journal
+/home/teste1/.local/share/gvfs-metadata
+/home/teste1/.local/share/gvfs-metadata/home
+/home/teste1/.local/share/gvfs-metadata/root
+/home/teste1/.local/share/gvfs-metadata/home-03de7668.log
+/home/teste1/.local/share/gvfs-metadata/root-e4fa05e2.log
+/home/teste1/.local/share/nautilus
+/home/teste1/.local/share/nautilus/scripts
+/home/teste1/.local/share/webkitgtk
+/home/teste1/.local/share/webkitgtk/deviceidhashsalts
+/home/teste1/.local/share/webkitgtk/deviceidhashsalts/1
+/home/teste1/.local/share/webkitgtk/databases
+/home/teste1/.local/share/webkitgtk/databases/indexeddb
+/home/teste1/.local/share/webkitgtk/databases/indexeddb/v1
+/home/teste1/.local/share/webkitgtk/localstorage
+/home/teste1/.esd_auth
+/home/teste1/Desktop
+/home/teste1/Desktop/test.txt
+/home/teste1/Downloads
+/home/teste1/Templates
+/home/teste1/Public
+/home/teste1/Documents
+/home/teste1/Music
+/home/teste1/Pictures
+/home/teste1/Videos
+/home/teste1/.viminfo
+/home/teste1/.bash_history
+/home/teste
+/home/teste/.mozilla
+/home/teste/.mozilla/extensions
+/home/teste/.mozilla/plugins
+/home/teste/.bash_logout
+/home/teste/.bash_profile
+/home/teste/.bashrc
+
+]]> </Data>
+<Comment>
+</Comment>
+<Result>
+[취약] : 소유자가 존재하지 않는 파일 및 디렉터리가 존재하는 경우
+</Result>
+</U-6>
+
+<U-7>
+<Name> /etc/passwd 파일 소유자 및 권한 설정 </Name>
+<Security_Threat>
+관리자(root) 외 사용자가 /etc/passwd 파일의 사용자 정보를 변조하여
+shell 변경, 사용자 추가/삭제 등 root를 포함한 사용자 권한 획득 가능
+</Security_Threat>
+<Data> <![CDATA[
+#ls -l /etc/passwd
+-rw-r--r--. 1 root root 2486 Jul 20 08:45 /etc/passwd
+
+]]> </Data>
+<Comment>
+[양호] : /etc/passwd 파일의 소유자가 root이고, 권한이 644 이하인 경우
+[취약] : /etc/passwd 파일의 소유자가 root가 아니거나, 권한이 644 이하가 아닌 경우
+</Comment>
+<Result>
+[양호] : /etc/passwd 파일의 소유자가 root이고, 권한이 644 이하인 경우
+</Result>
+</U-7>
+
+<U-8>
+<Name> /etc/shadow 파일 소유자 및 권한 설정 </Name>
+<Security_Threat>
+shadow파일은 패스워드를 암호화하여 저장하는 파일이며 해당 파일의
+암호화된 해쉬값을 복호화하여(크래킹) 비밀번호를 탈취할 수 있음
+</Security_Threat>
+<Data> <![CDATA[
+#ls -l /etc/shadow
+----------. 1 root root 1246 Jul 19 20:25 /etc/shadow
+
+]]> </Data>
+<Comment>
+[양호] : /etc/shadow 파일의 소유자가 root이고, 권한이 400 이하인 경우
+[취약] : /etc/shadow 파일의 소유자가 root가 아니거나, 권한이 400 이하가 아닌 경우
+</Comment>
+<Result>
+[양호] : /etc/shadow 파일의 소유자가 root이고, 권한이 400 이하인 경우
+</Result>
+</U-8>
+
+<U-9>
+<Name> /etc/hosts 파일 소유자 및 권한 설정 </Name>
+<Security_Threat>
+hosts 파일에 비인가자 쓰기 권한이 부여된 경우, 공격자는 hosts파일에
+악의적인 시스템을 등록하여, 이를 통해 정상적인 DNS를 우회하여 악성사이
+트로의 접속을 유도하는 파밍(Pharming) 공격 등에 악용될 수 있음
+hosts파일에 소유자외 쓰기 권한이 부여된 경우, 일반사용자 권한으로 hosts
+파일에 변조된 IP주소를 등록하여 정상적인 DNS를 방해하고 악성사이트로
+의 접속을 유도하는 파밍(Pharming) 공격 등에 악용될 수 있음
+</Security_Threat>
+<Data> <![CDATA[
+#ls -l /etc/hosts
+-rw-r--r--. 1 root root 158 Jun  7  2013 /etc/hosts
+]]> </Data>
+<Comment>
+[양호] : /etc/hosts 파일의 소유자가 root이고, 권한이 600인 이하경우
+[취약] : /etc/hosts 파일의 소유자가 root가 아니거나, 권한이 600 이상인 경우
+</Comment>
+<Result>
+[취약] : /etc/hosts 파일의 소유자가 root가 아니거나, 권한이 600 이상인 경우
+</Result>
+</U-9>
+
+<U-10>
+<Name> /etc/(x)inetd.conf 파일 소유자 및 권한 설정 </Name>
+<Security_Threat>
+(x)inetd.conf 파일에 소유자외 쓰기 권한이 부여된 경우, 일반사용자 권한으로
+(x)inetd.conf 파일에 등록된 서비스를 변조하거나 악의적인 프로그램(서비스)를 등록할 수 있음
+</Security_Threat>
+<Data> <![CDATA[
+#ls -l /etc/xinetd.conf
+-rw-r--r--. 1 root root 1 Jul 19 20:20 /etc/xinetd.conf
+
+#ls -l /etc/xinetd.d/*
+-rw-r--r--. 1 root root 27 Jul 19 10:05 /etc/xinetd.d/rpc
+-rw-r--r--. 1 root root 11 Jul 19 09:29 /etc/xinetd.d/test1.txt
+-rw-r--r--. 1 root root 11 Jul 19 09:29 /etc/xinetd.d/test.txt
+
+# ls -l /etc/inetd.conf
+ls: cannot access /etc/inetd.conf: No such file or directory
+
+#ls -l /etc/inetd.d/*
+
+]]> </Data>
+<Comment>
+[양호] : /etc/inetd.conf 파일의 소유자가 root이고, 권한이 600인 경우
+[취약] : /etc/inetd.conf 파일의 소유자가 root가 아니거나, 권한이 600이 아닌 경우
+</Comment>
+<Result>
+[N/A] : (x)inetd (슈퍼데몬)을 사용하지 않는 경우 
+</Result>
+</U-10>
+
+<U-11>
+<Name> /etc/syslog.conf 파일 소유자 및 권한 설정 </Name>
+<Security_Threat>
+syslog.conf 파일의 설정내용을 참조하여 로그의 저장위치가 노출되며 로그
+을 기록하지 않도록 설정하거나 대량의 로그를 기록하게 하여 시스템 과부
+하를 유도할 수 있음 
+</Security_Threat>
+<Data> <![CDATA[
+#ls -l /etc/syslog
+ls: cannot access /etc/syslog: No such file or directory
+
+#ls -l /etc/rsyslog
+ls: cannot access /etc/rsyslog: No such file or directory
+
+
+]]> </Data>
+<Comment>
+[양호] : /etc/syslog.conf 파일의 소유자가 root(또는 bin, sys)이고, 권한이 640 이하인 경우
+[취약] : /etc/syslog.conf 파일의 소유자가 root(또는 bin, sys)가 아니거나, 권한이 640 이하가 아닌 경우
+</Comment>
+<Result>
+[N/A] : syslog, rsyslog를 사용하지 않는 경우 
+</Result>
+</U-11>
+
+<U-12>
+<Name> /etc/services 파일 소유자 및 권한 설정 </Name>
+<Security_Threat>
+services 파일의 접근권한이 적절하지 않을 경우 비인가 사용자가 운영 포트
+번호를 변경하여 정상적인 서비스를 제한하거나, 허용되지 않은 포트를 오픈
+하여 악성 서비스를 의도적으로 실행할 수 있음
+</Security_Threat>
+<Data> <![CDATA[
+#ls -l /etc/services
+-rw-r--r--. 1 root root 670186 Jul 19 06:31 /etc/services
+
+]]> </Data>
+<Comment>
+</Comment>
+<Result>
+[양호] : etc/services 파일의 소유자가 root(또는 bin, sys)이고, 권한이 644 이하인 경우
+</Result>
+</U-12>
+
+<U-13>
+<Name> SUID, SGID, 설정 파일점검 </Name>
+<Security_Threat>
+SUID, SGID 파일의 접근권한이 적절하지 않을 경우 SUID, SGID 설정된
+파일로 특정 명령어를 실행하여 root 권한 획득 가능함 
+</Security_Threat>
+<Data> <![CDATA[
+#ls -l /usr/bin/admintool
+ls: cannot access /usr/bin/admintool: No such file or directory
+
+#ls -l /usr/bin/at
+-rwsr-xr-x. 1 root root 53048 Oct 30  2018 /usr/bin/at
+
+#ls -l /usr/bin/atq
+lrwxrwxrwx. 1 root root 2 Jun 20 22:26 /usr/bin/atq -> at
+
+#ls -l /usr/bin/atrm
+lrwxrwxrwx. 1 root root 2 Jun 20 22:26 /usr/bin/atrm -> at
+
+#ls -l /usr/bin/lpset
+ls: cannot access /usr/bin/lpset: No such file or directory
+
+#ls -l /usr/bin/newgrp
+-rwsr-xr-x. 1 root root 41936 Aug  8  2019 /usr/bin/newgrp
+
+#ls -l /usr/bin/nispasswd
+ls: cannot access /usr/bin/nispasswd: No such file or directory
+
+]]> </Data>
+<Comment>
+[양호] : 주요 실행파일의 권한에 SUID와 SGID에 대한 설정이 부여되어 있지 않은경우
+[취약] : 주요 실행파일의 권한에 SUID와 SGID에 대한 설정이 부여되어 있는 경우
+*불필요한 SUID/SGID 목록*
+/usr/bin/admintool  = System Administration Tools
+/usr/bin/at = 지정된 시간에 실행할 작업을 입력하고, 대기 목록을 확인하고, 제거하는 명령어
+/usr/bin/atq = Daemons, 현재 대기중인 작업 목록 확인
+/usr/bin/atrm = Daemons, 현재 대기중인 작업제거
+/usr/bin/lpset = 프린터와 관련된 장치, 디렉터리를 접근하는 명령어로 EGID 를 변경
+/usr/bin/newgrp = 현재 세션의 사용자 그룹 변경(지정한 그룹의 쉘로 환경이 바로 변경)
+/usr/bin/nispasswd = RPC DAEMON,NIS+passwd 테이블 패스워드 변경
+</Comment>
+<Result>
+[취약] : 주요 실행파일의 권한에 SUID와 SGID에 대한 설정이 부여되어 있는 경우
+</Result>
+</U-13>
+
+<U-14>
+<Name> 사용자, 시스템 시작파일 및 환경파일 소유자 및 권한 설정 </Name>
+<Security_Threat>
+홈 디렉터리 내의 사용자 파일 및 사용자별 시스템 시작파일 등과 같은
+환경변수 파일의 접근권한 설정이 적절하지 않을 경우 비인가자가 환경변수
+파일을 변조하여 정상 사용중인 사용자의 서비스가 제한 될 수 있음
+</Security_Threat>
+<Data> <![CDATA[
+#ls -al /home/test
+-rw-r--r--. 1 test test 193 Mar 31  2020 .bash_profile
+-rw-r--r--. 1 test test 231 Mar 31  2020 .bashrc
+#ls -al /home/teste
+-rw-r--r--. 1 1002 teste 193 Mar 31  2020 .bash_profile
+-rw-r--r--. 1 1002 teste 231 Mar 31  2020 .bashrc
+#ls -al /home/teste1
+-rw-r--r--.  1 1002 teste  193 Mar 31  2020 .bash_profile
+-rw-r--r--.  1 1002 teste  231 Mar 31  2020 .bashrc
+#ls -al /home/yeji
+-r--------.  1 yeji yeji  193 Mar 31  2020 .bash_profile
+-rw-r--r--.  1 yeji yeji  231 Mar 31  2020 .bashrc
+]]> </Data>
+<Comment>
+[양호] : 홈 디렉터리 환경변수 파일 소유자가 root 또는, 해당 계정으로 지정되어 있고,
+홈 디렉터리 환경변수 파일에 root와 소유자만 쓰기 권한이 부여된 경우
+[취약] : 홈 디렉터리 환경변수 파일 소유자가 root 또는, 해당 계정으로 지정되지 않고,
+홈 디렉터리 환경변수 파일에 root와 소유자 외에 쓰기 권한이 부여된 경우
+*환경변수 파일 종류*
+ .profile, .kshrc, .cshrc, .bashrc, .bash_profile, .login, .exrc, .netrc 등 
+</Comment>
+<Result>
+[취약] : 홈 디렉터리 환경변수 파일 소유자가 root 또는, 해당 계정으로 지정되지 않고,
+홈 디렉터리 환경변수 파일에 root와 소유자 외에 쓰기 권한이 부여된 경우
+</Result>
+</U-14>
+
+<U-15>
+<Name> world writable 파일 점검 </Name>
+<Security_Threat>
+시스템 파일과 같은 중요 파일에 world writable 설정이 될 경우, 일반사용자
+및 비인가된 사용자가 해당 파일을 임의로 수정, 삭제가 가능함
+</Security_Threat>
+<Data> <![CDATA[
+#find / -type f -perm -2 -exec ls -l {} \;
+-rw-rw-rw-. 1 root root 0 Jul 19 06:06 /sys/fs/selinux/member
+-rw-rw-rw-. 1 root root 0 Jul 19 06:06 /sys/fs/selinux/user
+-rw-rw-rw-. 1 root root 0 Jul 19 06:06 /sys/fs/selinux/relabel
+-rw-rw-rw-. 1 root root 0 Jul 19 06:06 /sys/fs/selinux/create
+-rw-rw-rw-. 1 root root 0 Jul 19 06:06 /sys/fs/selinux/access
+-rw-rw-rw-. 1 root root 0 Jul 19 06:06 /sys/fs/selinux/context
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/memory/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/freezer/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/cpu,cpuacct/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/perf_event/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/hugetlb/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/net_cls,net_prio/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/cpuset/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/blkio/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/machine.slice/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/user.slice/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 23:46 /sys/fs/cgroup/pids/system.slice/sm-client.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 23:46 /sys/fs/cgroup/pids/system.slice/sendmail.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:14 /sys/fs/cgroup/pids/system.slice/mnt-hgfs.mount/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:07 /sys/fs/cgroup/pids/system.slice/fwupd.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:07 /sys/fs/cgroup/pids/system.slice/run-user-0.mount/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:07 /sys/fs/cgroup/pids/system.slice/run-user-0-gvfs.mount/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/colord.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/wpa_supplicant.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/packagekit.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/bolt.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/upower.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/systemd-user-sessions.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/gdm.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/crond.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/atd.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/blk-availability.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/iscsi-shutdown.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/libvirtd.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/network.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/tuned.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/rsyslog.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/cups.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/sshd.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/NetworkManager-wait-online.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/vdo.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/NetworkManager.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/abrt-ccpp.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/firewalld.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/rhel-dmesg.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/ksm.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/sysstat.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/ksmtuned.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/systemd-update-utmp.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/abrt-oops.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/abrt-xorg.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/abrtd.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/ModemManager.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/avahi-daemon.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/bluetooth.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/libstoragemgmt.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/systemd-logind.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/alsa-state.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/dbus.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/vmtoolsd.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/vgauthd.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/polkit.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/accounts-daemon.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/smartd.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/rtkit-daemon.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/gssproxy.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/chronyd.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/udisks2.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/rngd.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/rpcbind.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/systemd-tmpfiles-setup.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/var-lib-nfs-rpc_pipefs.mount/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/auditd.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/rhel-import-state.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/systemd-udev-settle.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/dev-sda2.swap/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/dev-disk-by\x2dpath-pci\x2d0000:00:10.0\x2dscsi\x2d0:0:0:0\x2dpart2.swap/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/system-systemd\x2drfkill.slice/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/lvm2-monitor.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/boot.mount/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/dev-disk-by\x2duuid-52465e5a\x2de8b0\x2d4a9f\x2d8818\x2d9b2f3ac8a01b.swap/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/systemd-udev-trigger.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/systemd-tmpfiles-setup-dev.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/systemd-random-seed.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/systemd-udevd.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/rhel-readonly.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/systemd-journal-flush.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/systemd-sysctl.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/systemd-remount-fs.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/kmod-static-nodes.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/systemd-modules-load.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/rhel-domainname.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/sys-fs-fuse-connections.mount/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/lvm2-lvmetad.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/-.mount/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/sys-kernel-config.mount/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/systemd-vconsole-setup.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/systemd-fsck-root.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/dev-hugepages.mount/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/system-getty.slice/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/system-selinux\x2dpolicy\x2dmigrate\x2dlocal\x2dchanges.slice/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/sys-kernel-debug.mount/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/dev-mqueue.mount/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/systemd-journald.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/system.slice/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/pids/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/machine.slice/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/user.slice/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 23:46 /sys/fs/cgroup/devices/system.slice/sm-client.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 23:46 /sys/fs/cgroup/devices/system.slice/sendmail.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:14 /sys/fs/cgroup/devices/system.slice/mnt-hgfs.mount/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:07 /sys/fs/cgroup/devices/system.slice/fwupd.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:07 /sys/fs/cgroup/devices/system.slice/run-user-0.mount/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:07 /sys/fs/cgroup/devices/system.slice/run-user-0-gvfs.mount/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/colord.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/wpa_supplicant.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/packagekit.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/bolt.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/upower.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/systemd-user-sessions.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/gdm.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/crond.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/atd.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/blk-availability.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/iscsi-shutdown.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/libvirtd.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/network.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/tuned.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/rsyslog.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/cups.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/sshd.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/NetworkManager-wait-online.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/vdo.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/NetworkManager.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/abrt-ccpp.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/firewalld.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/rhel-dmesg.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/ksm.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/sysstat.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/ksmtuned.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/systemd-update-utmp.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/abrt-oops.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/abrt-xorg.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/abrtd.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/ModemManager.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/avahi-daemon.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/bluetooth.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/libstoragemgmt.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/systemd-logind.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/alsa-state.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/dbus.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/vmtoolsd.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/vgauthd.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/polkit.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/accounts-daemon.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/smartd.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/rtkit-daemon.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/gssproxy.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/chronyd.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/udisks2.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/rngd.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/rpcbind.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/systemd-tmpfiles-setup.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/var-lib-nfs-rpc_pipefs.mount/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/auditd.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/rhel-import-state.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/systemd-udev-settle.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/dev-sda2.swap/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/dev-disk-by\x2dpath-pci\x2d0000:00:10.0\x2dscsi\x2d0:0:0:0\x2dpart2.swap/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/system-systemd\x2drfkill.slice/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/lvm2-monitor.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/boot.mount/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/dev-disk-by\x2duuid-52465e5a\x2de8b0\x2d4a9f\x2d8818\x2d9b2f3ac8a01b.swap/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/systemd-udev-trigger.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/systemd-tmpfiles-setup-dev.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/systemd-random-seed.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/systemd-udevd.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/rhel-readonly.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/systemd-journal-flush.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/systemd-sysctl.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/systemd-remount-fs.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/kmod-static-nodes.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/systemd-modules-load.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/rhel-domainname.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/sys-fs-fuse-connections.mount/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/lvm2-lvmetad.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/-.mount/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/sys-kernel-config.mount/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/systemd-vconsole-setup.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/systemd-fsck-root.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/dev-hugepages.mount/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/system-getty.slice/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/system-selinux\x2dpolicy\x2dmigrate\x2dlocal\x2dchanges.slice/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/sys-kernel-debug.mount/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/dev-mqueue.mount/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/systemd-journald.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/system.slice/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/devices/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/machine.slice/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/user.slice/user-0.slice/session-1.scope/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/user.slice/user-0.slice/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/user.slice/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 23:46 /sys/fs/cgroup/systemd/system.slice/sm-client.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 23:46 /sys/fs/cgroup/systemd/system.slice/sendmail.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:14 /sys/fs/cgroup/systemd/system.slice/mnt-hgfs.mount/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:07 /sys/fs/cgroup/systemd/system.slice/fwupd.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:07 /sys/fs/cgroup/systemd/system.slice/run-user-0.mount/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:07 /sys/fs/cgroup/systemd/system.slice/run-user-0-gvfs.mount/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/colord.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/wpa_supplicant.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/packagekit.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/bolt.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/upower.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/systemd-user-sessions.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/gdm.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/crond.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/atd.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/blk-availability.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/iscsi-shutdown.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/libvirtd.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/network.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/tuned.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/rsyslog.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/cups.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/sshd.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/NetworkManager-wait-online.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/vdo.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/NetworkManager.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/abrt-ccpp.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/firewalld.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/rhel-dmesg.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/ksm.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/sysstat.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/ksmtuned.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/systemd-update-utmp.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/abrt-oops.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/abrt-xorg.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/abrtd.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/ModemManager.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/avahi-daemon.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/bluetooth.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/libstoragemgmt.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/systemd-logind.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/alsa-state.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/dbus.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/vmtoolsd.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/vgauthd.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/polkit.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/accounts-daemon.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/smartd.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/rtkit-daemon.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/gssproxy.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/chronyd.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/udisks2.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/rngd.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/rpcbind.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/systemd-tmpfiles-setup.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/var-lib-nfs-rpc_pipefs.mount/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/auditd.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/rhel-import-state.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/systemd-udev-settle.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/dev-sda2.swap/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/dev-disk-by\x2dpath-pci\x2d0000:00:10.0\x2dscsi\x2d0:0:0:0\x2dpart2.swap/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/system-systemd\x2drfkill.slice/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/lvm2-monitor.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/boot.mount/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/dev-disk-by\x2duuid-52465e5a\x2de8b0\x2d4a9f\x2d8818\x2d9b2f3ac8a01b.swap/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/systemd-udev-trigger.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/systemd-tmpfiles-setup-dev.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/systemd-random-seed.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/systemd-udevd.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/rhel-readonly.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/systemd-journal-flush.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/systemd-sysctl.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/systemd-remount-fs.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/kmod-static-nodes.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/systemd-modules-load.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/rhel-domainname.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/sys-fs-fuse-connections.mount/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/lvm2-lvmetad.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/systemd-fsck-root.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/dev-hugepages.mount/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/system-getty.slice/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/system-selinux\x2dpolicy\x2dmigrate\x2dlocal\x2dchanges.slice/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/sys-kernel-debug.mount/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/dev-mqueue.mount/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/systemd-journald.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/sys-kernel-config.mount/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/systemd-vconsole-setup.service/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/-.mount/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/system.slice/cgroup.event_control
+--w--w--w-. 1 root root 0 Jul 19 06:06 /sys/fs/cgroup/systemd/cgroup.event_control
+-rwxrw-rw-. 1 root root 38319 Aug  3  2020 /root/.cache/vmware/drag_and_drop/mZ4xvA/Tomcat/Tomcat_v1.0.sh
+-rwxrw-rw-. 1 root root 27090 Jun 21 03:54 /root/.cache/vmware/drag_and_drop/umCNfM/tomcat_v4.2.sh
+-rwxrw-rw-. 1 root root 27090 Jun 21 03:54 /root/Desktop/hi/tomcat_v4.2.sh
+-rwxrwxrwx. 1 root root 339 Jul 22 09:40 /mnt/hgfs/shell_script/main.sh
+-rwxrwxrwx. 1 root root 63143 Jul 23 00:06 /mnt/hgfs/shell_script/result.xml
+-rwxrwxrwx. 1 root root 2407 Jul 22 09:51 /mnt/hgfs/shell_script/script/U-1.sh
+-rwxrwxrwx. 1 root root 2824 Jul 22 09:51 /mnt/hgfs/shell_script/script/U-10.sh
+-rwxrwxrwx. 1 root root 2152 Jul 22 09:51 /mnt/hgfs/shell_script/script/U-11.sh
+-rwxrwxrwx. 1 root root 1581 Jul 22 09:51 /mnt/hgfs/shell_script/script/U-12.sh
+-rwxrwxrwx. 1 root root 3891 Jul 22 09:51 /mnt/hgfs/shell_script/script/U-13.sh
+-rwxrwxrwx. 1 root root 2820 Jul 22 09:51 /mnt/hgfs/shell_script/script/U-14.sh
+-rwxrwxrwx. 1 root root 1716 Jul 22 09:51 /mnt/hgfs/shell_script/script/U-15.sh
+-rwxrwxrwx. 1 root root 1420 Jul 22 09:51 /mnt/hgfs/shell_script/script/U-16.sh
+-rwxrwxrwx. 1 root root 2876 Jul 22 09:51 /mnt/hgfs/shell_script/script/U-17.sh
+-rwxrwxrwx. 1 root root 1824 Jul 22 09:51 /mnt/hgfs/shell_script/script/U-18.sh
+-rwxrwxrwx. 1 root root 2439 Jul 22 09:51 /mnt/hgfs/shell_script/script/U-19.sh
+-rwxrwxrwx. 1 root root 3761 Jul 22 09:51 /mnt/hgfs/shell_script/script/U-2.sh
+-rwxrwxrwx. 1 root root 1348 Jul 22 09:51 /mnt/hgfs/shell_script/script/U-20.sh
+-rwxrwxrwx. 1 root root 1759 Jul 22 09:51 /mnt/hgfs/shell_script/script/U-21.sh
+-rwxrwxrwx. 1 root root 1458 Jul 22 09:51 /mnt/hgfs/shell_script/script/U-22.sh
+-rwxrwxrwx. 1 root root 2911 Jul 22 09:51 /mnt/hgfs/shell_script/script/U-23.sh
+-rwxrwxrwx. 1 root root 2345 Jul 22 09:51 /mnt/hgfs/shell_script/script/U-24.sh
+-rwxrwxrwx. 1 root root 1734 Jul 22 22:01 /mnt/hgfs/shell_script/script/U-25.sh
+-rwxrwxrwx. 1 root root 1335 Jul 22 09:51 /mnt/hgfs/shell_script/script/U-26.sh
+-rwxrwxrwx. 1 root root 1850 Jul 22 09:51 /mnt/hgfs/shell_script/script/U-27.sh
+-rwxrwxrwx. 1 root root 1669 Jul 22 09:51 /mnt/hgfs/shell_script/script/U-28.sh
+-rwxrwxrwx. 1 root root 1678 Jul 23 00:04 /mnt/hgfs/shell_script/script/U-29.sh
+-rwxrwxrwx. 1 root root 2674 Jul 22 09:51 /mnt/hgfs/shell_script/script/U-3.sh
+-rwxrwxrwx. 1 root root 1387 Jul 22 09:51 /mnt/hgfs/shell_script/script/U-30.sh
+-rwxrwxrwx. 1 root root 1851 Jul 22 09:51 /mnt/hgfs/shell_script/script/U-31.sh
+-rwxrwxrwx. 1 root root 2115 Jul 22 09:51 /mnt/hgfs/shell_script/script/U-32.sh
+-rwxrwxrwx. 1 root root 1388 Jul 22 09:51 /mnt/hgfs/shell_script/script/U-33.sh
+-rwxrwxrwx. 1 root root 2090 Jul 22 09:51 /mnt/hgfs/shell_script/script/U-34.sh
+-rwxrwxrwx. 1 root root 1429 Jul 22 09:51 /mnt/hgfs/shell_script/script/U-35.sh
+-rwxrwxrwx. 1 root root 1341 Jul 22 09:51 /mnt/hgfs/shell_script/script/U-36.sh
+-rwxrwxrwx. 1 root root 1565 Jul 22 09:51 /mnt/hgfs/shell_script/script/U-37.sh
+-rwxrwxrwx. 1 root root 1662 Jul 22 09:51 /mnt/hgfs/shell_script/script/U-38.sh
+-rwxrwxrwx. 1 root root 1478 Jul 22 09:51 /mnt/hgfs/shell_script/script/U-39.sh
+-rwxrwxrwx. 1 root root 1691 Jul 22 09:51 /mnt/hgfs/shell_script/script/U-4.sh
+-rwxrwxrwx. 1 root root 1759 Jul 22 09:51 /mnt/hgfs/shell_script/script/U-40.sh
+-rwxrwxrwx. 1 root root 1476 Jul 22 09:51 /mnt/hgfs/shell_script/script/U-41.sh
+-rwxrwxrwx. 1 root root 1438 Jul 22 09:51 /mnt/hgfs/shell_script/script/U-42.sh
+-rwxrwxrwx. 1 root root 1711 Jul 22 09:51 /mnt/hgfs/shell_script/script/U-43.sh
+-rwxrwxrwx. 1 root root 1550 Jul 22 09:51 /mnt/hgfs/shell_script/script/U-44.sh
+-rwxrwxrwx. 1 root root 1536 Jul 22 09:51 /mnt/hgfs/shell_script/script/U-45.sh
+-rwxrwxrwx. 1 root root 1861 Jul 22 09:51 /mnt/hgfs/shell_script/script/U-46.sh
+-rwxrwxrwx. 1 root root 2712 Jul 22 09:51 /mnt/hgfs/shell_script/script/U-47.sh
+-rwxrwxrwx. 1 root root 1728 Jul 22 09:51 /mnt/hgfs/shell_script/script/U-48.sh
+-rwxrwxrwx. 1 root root 1269 Jul 22 09:51 /mnt/hgfs/shell_script/script/U-49.sh
+-rwxrwxrwx. 1 root root 1662 Jul 22 09:51 /mnt/hgfs/shell_script/script/U-5.sh
+-rwxrwxrwx. 1 root root 1354 Jul 22 09:51 /mnt/hgfs/shell_script/script/U-50.sh
+-rwxrwxrwx. 1 root root 1646 Jul 22 09:51 /mnt/hgfs/shell_script/script/U-51.sh
+-rwxrwxrwx. 1 root root 1173 Jul 22 22:14 /mnt/hgfs/shell_script/script/U-52.sh
+-rwxrwxrwx. 1 root root 1812 Jul 22 09:55 /mnt/hgfs/shell_script/script/U-53.sh
+-rwxrwxrwx. 1 root root 1265 Jul 22 09:51 /mnt/hgfs/shell_script/script/U-54.sh
+-rwxrwxrwx. 1 root root 1611 Jul 22 09:51 /mnt/hgfs/shell_script/script/U-55.sh
+-rwxrwxrwx. 1 root root 2044 Jul 22 09:51 /mnt/hgfs/shell_script/script/U-56.sh
+-rwxrwxrwx. 1 root root 1938 Jul 22 09:51 /mnt/hgfs/shell_script/script/U-57.sh
+-rwxrwxrwx. 1 root root 2168 Jul 22 22:17 /mnt/hgfs/shell_script/script/U-58.sh
+-rwxrwxrwx. 1 root root 1148 Jul 22 09:51 /mnt/hgfs/shell_script/script/U-59.sh
+-rwxrwxrwx. 1 root root 1429 Jul 22 09:51 /mnt/hgfs/shell_script/script/U-6.sh
+-rwxrwxrwx. 1 root root 1846 Jul 22 19:53 /mnt/hgfs/shell_script/script/U-60.sh
+-rwxrwxrwx. 1 root root 1672 Jul 22 09:51 /mnt/hgfs/shell_script/script/U-61.sh
+-rwxrwxrwx. 1 root root 1471 Jul 22 09:51 /mnt/hgfs/shell_script/script/U-62.sh
+-rwxrwxrwx. 1 root root 2211 Jul 22 09:51 /mnt/hgfs/shell_script/script/U-63.sh
+-rwxrwxrwx. 1 root root 2473 Jul 22 21:05 /mnt/hgfs/shell_script/script/U-64.sh
+-rwxrwxrwx. 1 root root 1404 Jul 22 09:51 /mnt/hgfs/shell_script/script/U-7.sh
+-rwxrwxrwx. 1 root root 1406 Jul 22 09:51 /mnt/hgfs/shell_script/script/U-8.sh
+-rwxrwxrwx. 1 root root 1823 Jul 22 09:51 /mnt/hgfs/shell_script/script/U-9.sh
+
+]]> </Data>
+<Comment>
+양호 : 시스템 중요 파일에 world writable 파일이 존재하지 않거나, 존재 시 설정
+이유를 확인하고 있는 경우
+[취약] : 시스템 중요 파일에 world writable 파일이 존재하나 해당 설정 이유를
+확인하고 있지 않는 경우
+</Comment>
+<Result>
+[취약] : 시스템 중요 파일에 world writable 파일이 존재하나 해당 설정 이유를
+확인하고 있지 않는 경우
+</Result>
+</U-15>
+
+<U-16>
+<Name> /dev에 존재하지 않는 device 파일 점검 </Name>
+<Security_Threat>
+공격자는 rootkit 설정파일들을 서버 관리자가 쉽게 발견하지 못하도록 /dev
+에 device 파일인 것처럼 위장하는 수법을 많이 사용함
+</Security_Threat>
+<Data> <![CDATA[
+#find /dev -type f -exec ls -l {} \;
+-rw-r--r--. 1 root root 254 Jul 23 00:06 /dev/nul
+
+]]> </Data>
+<Comment>
+[양호] : dev에 대한 파일 점검 후 존재하지 않은 device 파일을 제거한 경우
+[취약] : dev에 대한 파일 미점검 또는, 존재하지 않은 device 파일을 방치한 경우
+</Comment>
+<Result>
+[취약] : dev에 대한 파일 미점검 또는, 존재하지 않은 device 파일을 방치한 경우
+</Result>
+</U-16>
+
+<U-17>
+<Name> /root/.rhosts, hosts.equiv 사용 금지 </Name>
+<Security_Threat>
+ rlogin, rsh 등과 같은 ‘r’ command의 보안 설정이 적용되지 않은 경우,
+원격지의 공격자가 관리자 권한으로 목표 시스템상의 임의의 명령을 수행시킬
+수 있으며, 명령어 원격 실행을 통해 중요 정보 유출 및 시스템 장애를 유발
+시킬 수 있음. 또한 공격자 백도어 등으로도 활용될 수 있음
+r-command(rlogin, rsh등) 서비스의 접근통제에 관련된 파일로 권한설정을
+미 적용한 경우 r-command 서비스 사용 권한을 임의로 등록하여 무단 사용이 가능함
+</Security_Threat>
+<Data> <![CDATA[
+#ls -l /etc/hosts.equiv
+ls: cannot access /etc/hosts.equiv: No such file or directory
+
+#ls -l /root/.rhosts
+ls: cannot access /root/.rhosts: No such file or directory
+
+]]> </Data>
+<Comment>
+[양호] : login, shell, exec 서비스를 사용하지 않거나, 사용 시 아래와 같은 설정이 적용된 경우
+\1. /etc/hosts.equiv 및 $HOME/.rhosts 파일 소유자가 root 또는, 해당 계
+정인 경우
+\2. /etc/hosts.equiv 및 $HOME/.rhosts 파일 권한이 600 이하인 경우
+\3. /etc/hosts.equiv 및 $HOME/.rhosts 파일 설정에 ‘+’ 설정이 없는 경우
+[취약] : login, shell, exec 서비스를 사용하고, 위와 같은 설정이 적용되지 않은 경우
+</Comment>
+<Result>
+[양호] : login, shell, exec 서비스를 사용하지 않거나, 사용 시 아래와 같은 설정이 적용된 경우
+</Result>
+</U-17>
+
+<U-18>
+<Name> 접속 IP 및 포트 제한 </Name>
+<Security_Threat>
+허용할 호스트에 대한 IP 및 포트제한이 적용되지 않은 경우, Telnet, FTP같은
+보안에 취약한 네트워크 서비스를 통하여 불법적인 접근 및 시스템 침해
+사고가 발생할 수 있음
+</Security_Threat>
+<Data> <![CDATA[
+#cat /etc/hosts.deny
+#
+# hosts.deny	This file contains access rules which are used to
+#		deny connections to network services that either use
+#		the tcp_wrappers library or that have been
+#		started through a tcp_wrappers-enabled xinetd.
+#
+#		The rules in this file can also be set up in
+#		/etc/hosts.allow with a 'deny' option instead.
+#
+#		See 'man 5 hosts_options' and 'man 5 hosts_access'
+#		for information on rule syntax.
+#		See 'man tcpd' for information on tcp_wrappers
+#
+ALL:ALL
+
+
+#cat /etc/hosts.allow
+#
+# hosts.allow	This file contains access rules which are used to
+#		allow or deny connections to network services that
+#		either use the tcp_wrappers library or that have been
+#		started through a tcp_wrappers-enabled xinetd.
+#
+#		See 'man 5 hosts_options' and 'man 5 hosts_access'
+#		for information on rule syntax.
+#		See 'man tcpd' for information on tcp_wrappers
+#
+
+]]> </Data>
+<Comment>
+[양호] : 접속을 허용할 특정 호스트에 대한 IP 주소 및 포트 제한을 설정한 경우
+[취약] : 접속을 허용할 특정 호스트에 대한 IP 주소 및 포트 제한을 설정하지 않은 경우
+</Comment>
+<Result>
+[양호] : 접속을 허용할 특정 호스트에 대한 IP 주소 및 포트 제한을 설정한 경우
+</Result>
+</U-18>
+
+<U-19>
+<Name> Finger 서비스 비활성화 </Name>
+<Security_Threat>
+비인가자에게 사용자 정보가 조회되어 패스워드 공격을 통한 시스템 권한
+탈취 가능성이 있으므로 사용하지 않는다면 해당 서비스를 중지하여야 함
+</Security_Threat>
+<Data> <![CDATA[
+#cat /etc/inetd.conf | grep -v # ^* | grep -i finger
+
+#ls /etc/inetd | grep -i finger
+
+#cat /etc/xinetd.conf | grep -v # ^* | grep -i finger
+
+#ls -l /etc/xinetd | grep -i finger
+
+ls -l /usr/bin/finger
+ls: cannot access /usr/bin/finger: No such file or directory
+]]> </Data>
+<Comment>
+[양호] : Finger 서비스가 비활성화 되어 있는 경우
+[취약] : Finger 서비스가 활성화 되어 있는 경우
+</Comment>
+<Result>
+[양호] : Finger 서비스가 비활성화 되어 있는 경우
+</Result>
+</U-19>
+
+<U-20>
+<Name> Anonymous FTP 비활성화 </Name>
+<Security_Threat>
+Anonymous FTP(익명 FTP)를 사용 시 anonymous 계정으로 로그인 후 디렉
+터리에 쓰기 권한이 설정되어 있다면 악의적인 사용자가 local exploit을
+사용하여 시스템에 대한 공격을 가능하게 함
+</Security_Threat>
+<Data> <![CDATA[
+#cat /etc/passwd | grep ftp 
+ftp:x:14:50:FTP User:/var/ftp:/sbin/nologin
+
+]]> </Data>
+<Comment>
+[양호] : Anonymous FTP (익명 ftp) 접속을 차단한 경우
+[취약] : Anonymous FTP (익명 ftp) 접속을 차단하지 않은 경우
+</Comment>
+<Result>
+[취약] : Anonymous FTP (익명 ftp) 접속을 차단하지 않은 경우
+</Result>
+</U-20>
+
+<U-21>
+<Name> r 계열 서비스 비활성화 </Name>
+<Security_Threat>
+rsh, rlogin, rexec 등의 r command를 이용하여 원격에서 인증절차 없이
+터미널 접속, 쉘 명령어를 실행이 가능함
+</Security_Threat>
+<Data> <![CDATA[
+#ls -alL /etc/xinetd.d/* | grep -E rsh\|rlogin\|rexec
+
+#ls -alL /etc/inetd.d/* | grep -E "rsh|rlogin|rexec" | grep -v "grep"
+
+]]> </Data>
+<Comment>
+[양호] : 불필요한 r 계열 서비스가 비활성화 되어 있는 경우
+[취약] : 불필요한 r 계열 서비스가 활성화 되어 있는 경우
+</Comment>
+<Result>
+[양호] : 불필요한 r 계열 서비스가 비활성화 되어 있는 경우
+</Result>
+</U-21>
+
+<U-22>
+<Name> crond 파일 소유자 및 권한 설정 </Name>
+<Security_Threat>
+ root 외 일반사용자에게도 crontab 명령어를 사용할 수 있도록 할 경우, 고의
+또는 실수로 불법적인 예약 파일 실행으로 시스템 피해를 일으킬 수 있음
+</Security_Threat>
+<Data> <![CDATA[
+#ls -al /usr/bin/crontab
+-rwsr-xr-x. 1 root root 57656 Aug  8  2019 /usr/bin/crontab
+
+]]> </Data>
+<Comment>
+[양호] : crontab 명령어 일반사용자 금지 및 cron 관련 파일 640 이하인 경우
+[취약] : crontab 명령어 일반사용자 사용가능하거나, crond 관련 파일 640 이상인 경우
+</Comment>
+<Result>
+[취약] : crontab 명령어 일반사용자 사용가능하거나, crond 관련 파일 640 이상인 경우
+</Result>
+</U-22>
+
+<U-23>
+<Name> DoS 공격에 취약한 서비스 비활성화 </Name>
+<Security_Threat>
+해당 서비스가 활성화되어 있는 경우 시스템 정보 유출 및 DoS(서비스 거부
+공격)의 대상이 될 수 있음
+</Security_Threat>
+<Data> <![CDATA[
+#cat /etc/xinetd.d/echo
+cat: /etc/xinetd.d/echo: No such file or directory
+
+#cat /etc/xinetd.d/discard
+cat: /etc/xinetd.d/discard: No such file or directory
+
+#cat /etc/xinetd.d/daytime
+cat: /etc/xinetd.d/daytime: No such file or directory
+
+#cat /etc/xinetd.d/chargen
+cat: /etc/xinetd.d/chargen: No such file or directory
+
+]]> </Data>
+<Comment>
+[양호] : 사용하지 않는 DoS 공격에 취약한 서비스가 비활성화 된 경우
+[취약] : 사용하지 않는 DoS 공격에 취약한 서비스가 활성화 된 경우
+</Comment>
+<Result>
+[양호] : 사용하지 않는 DoS 공격에 취약한 서비스가 비활성화 된 경우
+</Result>
+</U-23>
+
+<U-24>
+<Name> NFS 서비스 비활성화 </Name>
+<Security_Threat>
+ NFS 서비스는 서버의 디스크를 클라이언트와 공유하는 서비스로 적정한
+보안설정이 적용되어 있지 않다면 불필요한 파일 공유로 인한 유출위험이 있음
+</Security_Threat>
+<Data> <![CDATA[
+#ps -ef \| grep "nfs" \| grep -v "[[:graph:]]nfs\|nfs[[:graph:]]"\| grep -v "grep"
+
+#ps -ef \| grep "statd" \| grep -v "[[:graph:]]statd\|statd[[:graph:]]"\| grep -v "grep"
+
+#ps -ef \| grep "lockd" \| grep -v "[[:graph:]]lockd\|lockd[[:graph:]]"\| grep -v "grep"
+
+]]> </Data>
+<Comment>
+[양호] : 불필요한 NFS 서비스 관련 데몬이 비활성화 되어 있는 경우
+[취약] : 불필요한 NFS 서비스 관련 데몬이 활성화 되어 있는 경우
+</Comment>
+<Result>
+[양호] : 불필요한 NFS 서비스 관련 데몬이 비활성화 되어 있는 경우
+</Result>
+</U-24>
+
+<U-25>
+<Name> NFS 접근 통제 </Name>
+<Security_Threat>
+접근제한 설정이 적절하지 않을 경우 인증절차 없이 비인가자의 디렉터리나
+파일의 접근이 가능하며, 해당 공유 시스템에 원격으로 마운트하여 중요
+파일을 변조하거나 유출할 위험이 있음
+</Security_Threat>
+<Data> <![CDATA[
+#ps -ef | grep -i "nfs" | grep -v "nfsiod" | grep -v "grep"
+
+#cat /etc/exports
+
+]]> </Data>
+<Comment>
+[양호] : 불필요한 NFS 서비스를 사용하지 않거나, 불가피하게 사용 시 everyone
+공유를 제한한 경우
+[취약] : 불필요한 NFS 서비스를 사용하고 있고, everyone 공유를 제한하지 않은 경우
+</Comment>
+<Result>
+[양호] : 불필요한 NFS 서비스를 사용하지 않거나, 불가피하게 사용 시 everyone
+</Result>
+</U-25>
+
+<U-26>
+<Name> automountd 제거 </Name>
+<Security_Threat>
+파일 시스템의 마운트 옵션을 변경하여 root 권한을 획득할 수 있으며, 로컬
+공격자가 automountd 프로세스 권한으로 임의의 명령을 실행할 수 있음
+</Security_Threat>
+<Data> <![CDATA[
+#ps -ef | grep -E "automount|autofs" | grep -v "grep"
+
+]]> </Data>
+<Comment>
+[양호] : automountd 서비스가 비활성화 되어 있는 경우
+[취약] : automountd 서비스가 활성화 되어 있는 경우
+</Comment>
+<Result>
+[양호] : automountd 서비스가 비활성화 되어 있는 경우
+</Result>
+</U-26>
+
+<U-27>
+<Name> RPC 서비스 확인 </Name>
+<Security_Threat>
+버퍼 오버플로우(Buffer Overflow), Dos, 원격실행 등의 취약성이 존재하는
+RPC 서비스를 통해 비인가자의 root 권한 획득 및 침해사고 발생 위험이
+있으므로 서비스를 중지하여야 함
+</Security_Threat>
+<Data> <![CDATA[
+#ls -l /etc/xinetd.d | awk -F ' ' '{print $9}'
+
+rpc
+test1.txt
+test.txt
+
+]]> </Data>
+<Comment>
+[양호] : 불필요한 RPC 서비스가 비활성화 되어 있는 경우
+[취약] : 불필요한 RPC 서비스가 활성화 되어 있는 경우
+</Comment>
+<Result>
+[취약] : 불필요한 RPC 서비스가 활성화 되어 있는 경우
+</Result>
+</U-27>
+
+<U-28>
+<Name> NIS, NIS+ 점검 </Name>
+<Security_Threat>
+보안상 취약한 서비스인 NIS를 사용하는 경우 비인가자가 타시스템의 root
+권한 획득이 가능하므로 사용하지 않는 것이 가장 바람직하나 만약 NIS를
+사용해야 하는 경우 사용자 정보보안에 많은 문제점을 내포하고 있는 NIS보
+다 NIS+를 사용하는 것을 권장함
+</Security_Threat>
+<Data> <![CDATA[
+#ps -ef | grep -E "ypesrv|ypbind|ypxfrd|rpc.yppasswdd|rpc.ypupdated" | grep -v "grep"
+
+]]> </Data>
+<Comment>
+[양호] : NIS 서비스가 비활성화 되어 있거나, 필요 시 NIS+를 사용하는 경우
+[취약] : NIS 서비스가 활성화 되어 있는 경우
+</Comment>
+<Result>
+[양호] : NIS 서비스가 비활성화 되어 있거나, 필요 시 NIS+를 사용하는 경우
+</Result>
+</U-28>
+
+<U-29>
+<Name> tftp, talk 서비스 비활성화 </Name>
+<Security_Threat>
+사용하지 않는 서비스나 취약점이 발표된 서비스 운용 시 공격 시도 가능
+</Security_Threat>
+<Data> <![CDATA[
+#cat /etc/xinetd.conf | grep -v "# ^*" | grep -E "tffp|talk|ntalk"
+
+#cat /etc/inetd.conf | grep -v "# ^*" | grep -E "tffp|talk|ntalk"
+
+]]> </Data>
+<Comment>
+[양호] : tftp, talk, ntalk 서비스가 비활성화 되어 있는 경우
+[취약] : tftp, talk, ntalk 서비스가 활성화 되어 있는 경우
+</Comment>
+<Result>
+[취약] : tftp, talk, ntalk 서비스가 활성화 되어 있는 경우
+</Result>
+</U-29>
+
+<U-30>
+<Name> Sendmail 버전 점검 </Name>
+<Security_Threat>
+ 취약점이 발견된 Sendmail 버전의 경우 버퍼 오버플로우(Buffer Overflow)
+공격에 의한 시스템 권한 획득 및 주요 정보 요출 가능성이 있음
+</Security_Threat>
+<Data> <![CDATA[
+#ps -ef | grep -i "sendmail" | grep -v "grep"
+root      70949      1  0 Jul19 ?        00:00:11 sendmail: accepting connections
+51        70969      1  0 Jul19 ?        00:00:00 sendmail: Queue runner@01:00:00 for /var/spool/clientmqueue
+
+#sendmail -d0.1 \< /dev/null | grep -i "Version"
+Version 8.14.7
+
+]]> </Data>
+<Comment>
+[양호] : Sendmail 버전이 최신버전인 경우
+[취약] : Sendmail 버전이 최신버전이 아닌 경우
+</Comment>
+<Result>
+[수동점검>
+</Result>
+</U-30>
+
+<U-31>
+<Name> 스팸 메일 릴레이 제한 </Name>
+<Security_Threat>
+ SMTP 서버의 릴레이 기능을 제한하지 않는 경우, 악의적인 사용목적을 가
+진 사용자들이 스팸메일 서버로 사용하거나 Dos공격의 대상이 될 수 있음
+</Security_Threat>
+<Data> <![CDATA[
+#ps -ef | grep "sendmail" | grep -v "grep"
+root      70949      1  0 Jul19 ?        00:00:11 sendmail: accepting connections
+51        70969      1  0 Jul19 ?        00:00:00 sendmail: Queue runner@01:00:00 for /var/spool/clientmqueue
+
+#cat /etc/mail/sendmail.cf | grep "R$\*" | grep "Relaying denied"
+R$*			$#error $@ 5.7.1 $: "550 Relaying denied"
+
+]]> </Data>
+<Comment>
+[양호] : SMTP 서비스를 사용하지 않거나 릴레이 제한이 설정되어 있는 경우
+[취약] : SMTP 서비스를 사용하며 릴레이 제한이 설정되어 있지 않은 경우
+</Comment>
+<Result>
+[양호] : SMTP 서비스를 사용하지 않거나 릴레이 제한이 설정되어 있는 경우
+</Result>
+</U-31>
+
+<U-32>
+<Name> 일반사용자의 Sendmail 실행 방지 </Name>
+<Security_Threat>
+일반 사용자가 q 옵션을 이용해서 메일큐, Sendmail 설정을 보거나 메일큐
+를 강제적으로 drop 시킬 수 있어 악의적으로 SMTP 서버의 오류를 발생시
+킬 수 있음
+</Security_Threat>
+<Data> <![CDATA[
+#ps -ef | grep "sendmail" | grep -v "grep"
+root      70949      1  0 Jul19 ?        00:00:11 sendmail: accepting connections
+51        70969      1  0 Jul19 ?        00:00:00 sendmail: Queue runner@01:00:00 for /var/spool/clientmqueue
+
+#cat /etc/mail/sendmail.cf | grep -v "# ^*" | grep -i "PrivacyOptions" | grep -i "restrictqrun"
+O PrivacyOptions=authwarnings,novrfy,noexpn,restrictqrun
+
+]]> </Data>
+<Comment>
+[양호] : SMTP 서비스 미사용 또는, 일반 사용자의 Sendmail 실행 방지가 설정된 경우
+[취약] : SMTP 서비스 사용 및 일반 사용자의 Sendmail 실행 방지가 설정되어 있지 않은 경우
+</Comment>
+<Result>
+[양호] : 일반 사용자의 Sendmail 실행 방지가 설정된 경우
+</Result>
+</U-32>
+
+<U-33>
+<Name> DNS 보안 버전 패치 </Name>
+<Security_Threat>
+최신버전(2016.01 기준 9.10.3-P2) 이하의 버전에서는 서비스거부 공격, 버퍼
+오버플로우(Buffer Overflow) 및 DNS 서버 원격 침입 등의 취약성이 존재함
+</Security_Threat>
+<Data> <![CDATA[
+#ps -ef | grep named | grep -v "grep"
+
+#named -v
+./U-33.sh: line 13: named: command not found
+
+]]> </Data>
+<Comment>
+[양호] : DNS 서비스를 사용하지 않거나 주기적으로 패치를 관리하고 있는 경우
+[취약] : DNS 서비스를 사용하며 주기적으로 패치를 관리하고 있지 않는 경우
+</Comment>
+<Result>
+[N/A] : DNS 서비스를 사용하지 않은 경우
+</Result>
+</U-33>
+
+<U-34>
+<Name> DNS Zone Transfer 설정 </Name>
+<Security_Threat>
+비인가자 Zone Transfer를 이용해 Zone 정보를 전송받아 호스트 정보, 시스
+템 정보, 네트워크 구성 형태 등의 많은 정보를 파악할 수 있음
+</Security_Threat>
+<Data> <![CDATA[
+#ps -ef | grep "named" | grep -v "grep"
+
+#cat /etc/named.conf | grep -i "allow-transfer" | grep -v "# ^*"
+
+#cat /etc/named.boot | grep -i "xfrnets" | grep -v "# ^*"
+
+]]> </Data>
+<Comment>
+[양호] : DNS 서비스 미사용 또는, Zone Transfer를 허가된 사용자에게만 허용한 경우
+[취약] : DNS 서비스를 사용하며 Zone Transfer를 모든 사용자에게 허용한 경우
+</Comment>
+<Result>
+[N/A] : DNS 서비스를 사용하지 않은 경우
+</Result>
+</U-34>
+
+<U-35>
+<Name> 최신 보안패치 및 벤더 권고사항 적용 </Name>
+<Security_Threat>
+최신 보안패치가 적용되지 않을 경우, 이미 알려진 취약점을 통하여 공격자
+에 의해 시스템 침해사고 발생 가능성이 존재함
+개되어서는 안되는 파일 등이 노출 가능함
+</Security_Threat>
+<Data> <![CDATA[
+#cat /etc/centos-release
+CentOS Linux release 7.9.2009 (Core)
+
+]]> </Data>
+<Comment>
+[양호] : 패치 적용 정책을 수립하여 주기적으로 패치관리를 하고 있으며, 패치
+관련 내용을 확인하고 적용했을 경우
+[취약] : 패치 적용 정책을 수립하지 않고 주기적으로 패치관리를 하지 않거나 패
+치 관련 내용을 확인하지 않고 적용하지 않았을 경우
+</Comment>
+<Result>
+[수동점검>
+</Result>
+</U-35>
+
+<U-36>
+<Name> 로그의 정기적 검토 및 보고 </Name>
+<Security_Threat>
+로그의 검토 및 보고 절차가 없는 경우 외부 침입 시도에 대한 식별이 누락
+될 수 있고, 침입 시도가 의심되는 사례 발견 시 관련 자료를 분석하여 해당
+장비에 대한 접근을 차단하는 등의 추가 조치가 어려움
+</Security_Threat>
+<Data> <![CDATA[
+#인터뷰
+]]> </Data>
+<Comment>
+[양호] : 접속기록 등의 보안 로그, 응용 프로그램 및 시스템 로그 기록에 대해 정기
+적으로 검토, 분석, 리포트 작성 및 보고 등의 조치가 이루어지는 경우
+[취약] : 위 로그 기록에 대해 정기적으로 검토, 분석, 리포트 작성 및 보고 등의 조
+치가 이루어 지지 않는 경우
+</Comment>
+<Result>
+[인터뷰>
+</Result>
+</U-36>
+
+<U-37>
+<Name> root 이외의 UID가 ‘0’ 금지 </Name>
+<Security_Threat>
+ root 계정과 동일 UID가 설정되어 있는 일반사용자 계정도 root 권한을 부
+여받아 관리자가 실행 할 수 있는 모든 작업이 가능함(서비스 시작, 중지,
+재부팅, root 권한 파일 편집 등)
+root와 동일한 UID를 사용하므로 사용자 감사 추적 시 어려움이 발생함
+</Security_Threat>
+<Data> <![CDATA[
+#cat /etc/passwd 
+root:x:0:0:root:/root:/bin/bash
+bin:x:1:1:bin:/bin:/sbin/nologin
+daemon:x:2:2:daemon:/sbin:/sbin/nologin
+adm:x:3:4:adm:/var/adm:/sbin/nologin
+lp:x:4:7:lp:/var/spool/lpd:/sbin/nologin
+sync:x:5:0:sync:/sbin:/bin/sync
+shutdown:x:6:0:shutdown:/sbin:/sbin/shutdown
+halt:x:7:0:halt:/sbin:/sbin/halt
+mail:x:8:12:mail:/var/spool/mail:/sbin/nologin
+operator:x:11:0:operator:/root:/sbin/nologin
+games:x:12:100:games:/usr/games:/sbin/nologin
+ftp:x:14:50:FTP User:/var/ftp:/sbin/nologin
+nobody:x:99:99:Nobody:/:/sbin/nologin
+systemd-network:x:192:192:systemd Network Management:/:/sbin/nologin
+dbus:x:81:81:System message bus:/:/sbin/nologin
+polkitd:x:999:998:User for polkitd:/:/sbin/nologin
+libstoragemgmt:x:998:995:daemon account for libstoragemgmt:/var/run/lsm:/sbin/nologin
+colord:x:997:994:User for colord:/var/lib/colord:/sbin/nologin
+rpc:x:32:32:Rpcbind Daemon:/var/lib/rpcbind:/sbin/nologin
+saned:x:996:993:SANE scanner daemon user:/usr/share/sane:/sbin/nologin
+gluster:x:995:992:GlusterFS daemons:/run/gluster:/sbin/nologin
+saslauth:x:994:76:Saslauthd user:/run/saslauthd:/sbin/nologin
+abrt:x:173:173::/etc/abrt:/sbin/nologin
+setroubleshoot:x:993:990::/var/lib/setroubleshoot:/sbin/nologin
+rtkit:x:172:172:RealtimeKit:/proc:/sbin/nologin
+pulse:x:171:171:PulseAudio System Daemon:/var/run/pulse:/sbin/nologin
+radvd:x:75:75:radvd user:/:/sbin/nologin
+chrony:x:992:987::/var/lib/chrony:/sbin/nologin
+unbound:x:991:986:Unbound DNS resolver:/etc/unbound:/sbin/nologin
+qemu:x:107:107:qemu user:/:/sbin/nologin
+tss:x:59:59:Account used by the trousers package to sandbox the tcsd daemon:/dev/null:/sbin/nologin
+sssd:x:990:984:User for sssd:/:/sbin/nologin
+usbmuxd:x:113:113:usbmuxd user:/:/sbin/nologin
+geoclue:x:989:983:User for geoclue:/var/lib/geoclue:/sbin/nologin
+ntp:x:38:38::/etc/ntp:/sbin/nologin
+gdm:x:42:42::/var/lib/gdm:/sbin/nologin
+rpcuser:x:29:29:RPC Service User:/var/lib/nfs:/sbin/nologin
+nfsnobody:x:65534:65534:Anonymous NFS User:/var/lib/nfs:/sbin/nologin
+gnome-initial-setup:x:988:982::/run/gnome-initial-setup/:/sbin/nologin
+sshd:x:74:74:Privilege-separated SSH:/var/empty/sshd:/sbin/nologin
+avahi:x:70:70:Avahi mDNS/DNS-SD Stack:/var/run/avahi-daemon:/sbin/nologin
+postfix:x:89:89::/var/spool/postfix:/sbin/nologin
+tcpdump:x:72:72::/:/sbin/nologin
+yeji:x:1000:1000:yeji:/home/yeji:/bin/bash
+tomcat:x:53:53:Apache Tomcat:/usr/share/tomcat:/sbin/nologin
+test:x:1001:1001::/home/test:/bin/bash
+mailnull:x:47:47::/var/spool/mqueue:/sbin/nologin
+choi:x:1000:1000:yeji::bin/bash
+
+]]> </Data>
+<Comment>
+[양호] : root 계정과 동일한 UID를 갖는 계정이 존재하지 않는 경우
+[취약] : root 계정과 동일한 UID를 갖는 계정이 존재하는 경우
+</Comment>
+<Result>
+[양호] : root 계정과 동일한 UID를 갖는 계정이 존재하지 않는 경우
+</Result>
+</U-37>
+
+<U-38>
+<Name> root 계정 su 제한 </Name>
+<Security_Threat>
+무분별한 사용자 변경으로 타 사용자 소유의 파일을 변경 할 수 있으며
+root 계정으로 변경하는 경우 관리자 권한을 획득 할 수 있음
+</Security_Threat>
+<Data> <![CDATA[
+#cat /etc/group | grep -i "wheel"
+wheel:x:10:
+
+#cat /etc/pam.d/su
+#%PAM-1.0
+auth		sufficient	pam_rootok.so
+# Uncomment the following line to implicitly trust users in the "wheel" group.
+#auth		sufficient	pam_wheel.so trust use_uid
+# Uncomment the following line to require a user to be in the "wheel" group.
+#auth		required	pam_wheel.so use_uid
+auth		substack	system-auth
+auth		include		postlogin
+account		sufficient	pam_succeed_if.so uid = 0 use_uid quiet
+account		include		system-auth
+password	include		system-auth
+session		include		system-auth
+session		include		postlogin
+session		optional	pam_xauth.so
+
+]]> </Data>
+<Comment>
+[양호] : su 명령어를 특정 그룹에 속한 사용자만 사용하도록 제한되어 있는 경우
+※ 일반사용자 계정 없이 root 계정만 사용하는 경우 su 명령어 사용제한 불필요
+[취약] : su 명령어를 모든 사용자가 사용하도록 설정되어 있는 경우
+</Comment>
+<Result>
+[양호] : su 명령어를 특정 그룹에 속한 사용자만 사용하도록 제한되어 있는 경우
+</Result>
+</U-38>
+
+<U-39>
+<Name> 패스워드 최소 길이 설정 </Name>
+<Security_Threat>
+패스워드 문자열이 짧은 경우 유추가 가능 할 수 있으며 암호화된 패스워드
+해시값을 무작위 대입공격, 사전대입 공격 등으로 단시간에 패스워드 크렉이 가능함
+</Security_Threat>
+<Data> <![CDATA[
+#cat /etc/login.defs | grep "# ^*" | grep -i "PASS_MIN_LEN"
+
+]]> </Data>
+<Comment>
+[양호] : 패스워드 최소 길이가 8자 이상으로 설정되어 있는 경우
+[취약] : 패스워드 최소 길이가 8자 미만으로 설정되어 있는 경우
+</Comment>
+<Result>
+[취약] : 패스워드 최소 길이가 8자 미만으로 설정되어 있는 경우
+</Result>
+</U-39>
+
+<U-40>
+<Name> 패스워드 최대 사용기간 설정 </Name>
+<Security_Threat>
+패스워드 최대 사용기간을 설정하지 않은 경우 비인가자의 각종 공격(무작
+위 대입 공격, 사전 대입 공격 등)을 시도할 수 있는 기간 제한이 없으므로
+공격자 입장에서는 장기적인 공격을 시행할 수 있어 시행한 기간에 비례하
+여 사용자 패스워드가 유출될 수 있는 확률이 증가함
+</Security_Threat>
+<Data> <![CDATA[
+#cat /etc/login.defs | grep -v "# ^*" | grep -i "PASS_MAX_DAYS"
+#	PASS_MAX_DAYS	Maximum number of days a password may be used.
+PASS_MAX_DAYS	99999
+
+]]> </Data>
+<Comment>
+[양호] : 패스워드 최대 사용기간이 90일(12주) 이하로 설정되어 있는 경우
+[취약] : 패스워드 최대 사용기간이 90일(12주) 이하로 설정되어 있지 않는 경우
+</Comment>
+<Result>
+[취약] : 패스워드 최대 사용기간이 90일(12주) 이하로 설정되어 있지 않는 경우
+</Result>
+</U-40>
+
+<U-41>
+<Name> 패스워드 최소 사용기간 설정 </Name>
+<Security_Threat>
+최소 사용기간이 설정되어 있지 않아 반복적으로 즉시 변경이 가능한 경
+우 이전 패스워드 기억 횟수를 설정하여도 반복적으로 즉시 변경하여 이전
+패스워드로 설정이 가능함
+</Security_Threat>
+<Data> <![CDATA[
+#cat /etc/login.defs | grep -i "PASS_MIN_DAYS"
+#	PASS_MIN_DAYS	Minimum number of days allowed between password changes.
+PASS_MIN_DAYS	0
+
+]]> </Data>
+<Comment>
+[양호] : 패스워드 최소 사용기간이 1일 이상 설정되어 있는 경우
+[취약] : 패스워드 최소 사용기간이 설정되어 있지 않는 경우
+</Comment>
+<Result>
+[취약] : 패스워드 최소 사용기간이 설정되어 있지 않는 경우
+</Result>
+</U-41>
+
+<U-42>
+<Name> 불필요한 계정 제거 </Name>
+<Security_Threat>
+로그인이 가능하고 현재 사용하지 않는 불필요한 계정은 사용중인 계정보다
+상대적으로 관리가 취약하여 공격자의 목표가 되어 계정이 탈취될 수 있음
+※ 퇴직, 전직, 휴직 등의 사유발생시 즉시 권한을 회수
+</Security_Threat>
+<Data> <![CDATA[
+#cat /etc/passwd | grep -E "lp|uucp|nuucp"
+lp:x:4:7:lp:/var/spool/lpd:/sbin/nologin
+
+#cat /etc/passwd
+root:x:0:0:root:/root:/bin/bash
+bin:x:1:1:bin:/bin:/sbin/nologin
+daemon:x:2:2:daemon:/sbin:/sbin/nologin
+adm:x:3:4:adm:/var/adm:/sbin/nologin
+lp:x:4:7:lp:/var/spool/lpd:/sbin/nologin
+sync:x:5:0:sync:/sbin:/bin/sync
+shutdown:x:6:0:shutdown:/sbin:/sbin/shutdown
+halt:x:7:0:halt:/sbin:/sbin/halt
+mail:x:8:12:mail:/var/spool/mail:/sbin/nologin
+operator:x:11:0:operator:/root:/sbin/nologin
+games:x:12:100:games:/usr/games:/sbin/nologin
+ftp:x:14:50:FTP User:/var/ftp:/sbin/nologin
+nobody:x:99:99:Nobody:/:/sbin/nologin
+systemd-network:x:192:192:systemd Network Management:/:/sbin/nologin
+dbus:x:81:81:System message bus:/:/sbin/nologin
+polkitd:x:999:998:User for polkitd:/:/sbin/nologin
+libstoragemgmt:x:998:995:daemon account for libstoragemgmt:/var/run/lsm:/sbin/nologin
+colord:x:997:994:User for colord:/var/lib/colord:/sbin/nologin
+rpc:x:32:32:Rpcbind Daemon:/var/lib/rpcbind:/sbin/nologin
+saned:x:996:993:SANE scanner daemon user:/usr/share/sane:/sbin/nologin
+gluster:x:995:992:GlusterFS daemons:/run/gluster:/sbin/nologin
+saslauth:x:994:76:Saslauthd user:/run/saslauthd:/sbin/nologin
+abrt:x:173:173::/etc/abrt:/sbin/nologin
+setroubleshoot:x:993:990::/var/lib/setroubleshoot:/sbin/nologin
+rtkit:x:172:172:RealtimeKit:/proc:/sbin/nologin
+pulse:x:171:171:PulseAudio System Daemon:/var/run/pulse:/sbin/nologin
+radvd:x:75:75:radvd user:/:/sbin/nologin
+chrony:x:992:987::/var/lib/chrony:/sbin/nologin
+unbound:x:991:986:Unbound DNS resolver:/etc/unbound:/sbin/nologin
+qemu:x:107:107:qemu user:/:/sbin/nologin
+tss:x:59:59:Account used by the trousers package to sandbox the tcsd daemon:/dev/null:/sbin/nologin
+sssd:x:990:984:User for sssd:/:/sbin/nologin
+usbmuxd:x:113:113:usbmuxd user:/:/sbin/nologin
+geoclue:x:989:983:User for geoclue:/var/lib/geoclue:/sbin/nologin
+ntp:x:38:38::/etc/ntp:/sbin/nologin
+gdm:x:42:42::/var/lib/gdm:/sbin/nologin
+rpcuser:x:29:29:RPC Service User:/var/lib/nfs:/sbin/nologin
+nfsnobody:x:65534:65534:Anonymous NFS User:/var/lib/nfs:/sbin/nologin
+gnome-initial-setup:x:988:982::/run/gnome-initial-setup/:/sbin/nologin
+sshd:x:74:74:Privilege-separated SSH:/var/empty/sshd:/sbin/nologin
+avahi:x:70:70:Avahi mDNS/DNS-SD Stack:/var/run/avahi-daemon:/sbin/nologin
+postfix:x:89:89::/var/spool/postfix:/sbin/nologin
+tcpdump:x:72:72::/:/sbin/nologin
+yeji:x:1000:1000:yeji:/home/yeji:/bin/bash
+tomcat:x:53:53:Apache Tomcat:/usr/share/tomcat:/sbin/nologin
+test:x:1001:1001::/home/test:/bin/bash
+mailnull:x:47:47::/var/spool/mqueue:/sbin/nologin
+choi:x:1000:1000:yeji::bin/bash
+
+]]> </Data>
+<Comment>
+[양호] : 불필요한 계정이 존재하지 않는 경우
+[취약] : 불필요한 계정이 존재하는 경우
+</Comment>
+<Result>
+[취약] : 불필요한 계정이 존재하는 경우
+</Result>
+</U-42>
+
+<U-43>
+<Name> 관리자 그룹에 최소한의 계정 포함 </Name> utmp, wtmp ,btmp
+<Security_Threat>
+시스템을 관리하는 root 계정이 속한 그룹은 시스템 운영 파일에 대한 접근
+권한이 부여되어 있으므로 해당 관리자 그룹에 속한 계정이 비인가자에게
+유출될 경우 관리자 권한으로 시스템에 접근하여 계정 정보 유출, 환경설정
+파일 및 디렉터리 변조 등의 위협이 존재함
+</Security_Threat>
+<Data> <![CDATA[
+#cat /etc/group | grep "root"
+root:x:0:
+
+]]> </Data>
+<Comment>
+[양호] : 관리자 그룹에 불필요한 계정이 등록되어 있지 않은 경우
+[취약] : 관리자 그룹에 불필요한 계정이 등록되어 있는 경우
+</Comment>
+<Result>
+[양호] : 관리자 그룹에 불필요한 계정이 등록되어 있지 않은 경우
+</Result>
+</U-43>
+
+<U-44>
+<Name> 계정이 존재하지 않는 GID 금지 </Name>
+<Security_Threat>
+계정이 존재하지 않는 그룹은 현재 사용되고 있는 그룹이 아닌 불필요한 그
+룹으로 삭제 조치가 필요함
+</Security_Threat>
+<Data> <![CDATA[
+#cat /etc/group
+root:x:0:
+bin:x:1:
+daemon:x:2:
+sys:x:3:
+adm:x:4:
+tty:x:5:
+disk:x:6:
+lp:x:7:
+mem:x:8:
+kmem:x:9:
+wheel:x:10:
+cdrom:x:11:
+mail:x:12:postfix
+man:x:15:
+dialout:x:18:
+floppy:x:19:
+games:x:20:
+tape:x:33:
+video:x:39:
+ftp:x:50:
+lock:x:54:
+audio:x:63:
+nobody:x:99:
+users:x:100:
+utmp:x:22:
+utempter:x:35:
+input:x:999:
+systemd-journal:x:190:
+systemd-network:x:192:
+dbus:x:81:
+polkitd:x:998:
+printadmin:x:997:
+cgred:x:996:
+libstoragemgmt:x:995:
+colord:x:994:
+rpc:x:32:
+saned:x:993:
+dip:x:40:
+gluster:x:992:
+ssh_keys:x:991:
+saslauth:x:76:
+abrt:x:173:
+setroubleshoot:x:990:
+rtkit:x:172:
+pulse-access:x:989:
+pulse-rt:x:988:
+pulse:x:171:
+radvd:x:75:
+chrony:x:987:
+unbound:x:986:
+kvm:x:36:qemu
+qemu:x:107:
+tss:x:59:
+libvirt:x:985:
+sssd:x:984:
+usbmuxd:x:113:
+geoclue:x:983:
+ntp:x:38:
+gdm:x:42:
+rpcuser:x:29:
+nfsnobody:x:65534:
+gnome-initial-setup:x:982:
+sshd:x:74:
+slocate:x:21:
+avahi:x:70:
+postdrop:x:90:
+postfix:x:89:
+stapusr:x:156:
+stapsys:x:157:
+stapdev:x:158:
+tcpdump:x:72:
+yeji:x:1000:
+tomcat:x:53:
+test:x:1001:
+teste:x:1002:
+mailnull:x:47:
+smmsp:x:51:
+
+#cat /etc/passwd
+root:x:0:0:root:/root:/bin/bash
+bin:x:1:1:bin:/bin:/sbin/nologin
+daemon:x:2:2:daemon:/sbin:/sbin/nologin
+adm:x:3:4:adm:/var/adm:/sbin/nologin
+lp:x:4:7:lp:/var/spool/lpd:/sbin/nologin
+sync:x:5:0:sync:/sbin:/bin/sync
+shutdown:x:6:0:shutdown:/sbin:/sbin/shutdown
+halt:x:7:0:halt:/sbin:/sbin/halt
+mail:x:8:12:mail:/var/spool/mail:/sbin/nologin
+operator:x:11:0:operator:/root:/sbin/nologin
+games:x:12:100:games:/usr/games:/sbin/nologin
+ftp:x:14:50:FTP User:/var/ftp:/sbin/nologin
+nobody:x:99:99:Nobody:/:/sbin/nologin
+systemd-network:x:192:192:systemd Network Management:/:/sbin/nologin
+dbus:x:81:81:System message bus:/:/sbin/nologin
+polkitd:x:999:998:User for polkitd:/:/sbin/nologin
+libstoragemgmt:x:998:995:daemon account for libstoragemgmt:/var/run/lsm:/sbin/nologin
+colord:x:997:994:User for colord:/var/lib/colord:/sbin/nologin
+rpc:x:32:32:Rpcbind Daemon:/var/lib/rpcbind:/sbin/nologin
+saned:x:996:993:SANE scanner daemon user:/usr/share/sane:/sbin/nologin
+gluster:x:995:992:GlusterFS daemons:/run/gluster:/sbin/nologin
+saslauth:x:994:76:Saslauthd user:/run/saslauthd:/sbin/nologin
+abrt:x:173:173::/etc/abrt:/sbin/nologin
+setroubleshoot:x:993:990::/var/lib/setroubleshoot:/sbin/nologin
+rtkit:x:172:172:RealtimeKit:/proc:/sbin/nologin
+pulse:x:171:171:PulseAudio System Daemon:/var/run/pulse:/sbin/nologin
+radvd:x:75:75:radvd user:/:/sbin/nologin
+chrony:x:992:987::/var/lib/chrony:/sbin/nologin
+unbound:x:991:986:Unbound DNS resolver:/etc/unbound:/sbin/nologin
+qemu:x:107:107:qemu user:/:/sbin/nologin
+tss:x:59:59:Account used by the trousers package to sandbox the tcsd daemon:/dev/null:/sbin/nologin
+sssd:x:990:984:User for sssd:/:/sbin/nologin
+usbmuxd:x:113:113:usbmuxd user:/:/sbin/nologin
+geoclue:x:989:983:User for geoclue:/var/lib/geoclue:/sbin/nologin
+ntp:x:38:38::/etc/ntp:/sbin/nologin
+gdm:x:42:42::/var/lib/gdm:/sbin/nologin
+rpcuser:x:29:29:RPC Service User:/var/lib/nfs:/sbin/nologin
+nfsnobody:x:65534:65534:Anonymous NFS User:/var/lib/nfs:/sbin/nologin
+gnome-initial-setup:x:988:982::/run/gnome-initial-setup/:/sbin/nologin
+sshd:x:74:74:Privilege-separated SSH:/var/empty/sshd:/sbin/nologin
+avahi:x:70:70:Avahi mDNS/DNS-SD Stack:/var/run/avahi-daemon:/sbin/nologin
+postfix:x:89:89::/var/spool/postfix:/sbin/nologin
+tcpdump:x:72:72::/:/sbin/nologin
+yeji:x:1000:1000:yeji:/home/yeji:/bin/bash
+tomcat:x:53:53:Apache Tomcat:/usr/share/tomcat:/sbin/nologin
+test:x:1001:1001::/home/test:/bin/bash
+mailnull:x:47:47::/var/spool/mqueue:/sbin/nologin
+choi:x:1000:1000:yeji::bin/bash
+
+]]> </Data>
+<Comment>
+[양호] : 시스템 관리나 운용에 불필요한 그룹이 삭제 되어있는 경우
+[취약] : 시스템 관리나 운용에 불필요한 그룹이 존재할 경우
+</Comment>
+<Result>
+[취약] : 시스템 관리나 운용에 불필요한 그룹이 존재할 경우
+</Result>
+</U-44>
+
+<U-45>
+<Name> 동일한 UID 금지 </Name>
+<Security_Threat>
+중복된 UID가 존재할 경우 시스템은 동일한 사용자로 인식하여 소유자의 권
+한이 중복되어 불필요한 권한이 부여되며 시스템 로그를 이용한 감사 추적
+시 사용자가 구분되지 않음 (권한 할당은 그룹권한을 이용하여 운영)
+</Security_Threat>
+<Data> <![CDATA[
+#cat /etc/passwd | awk -F ':' '{print }'
+0
+1
+2
+3
+4
+5
+6
+7
+8
+11
+12
+14
+99
+192
+81
+999
+998
+997
+32
+996
+995
+994
+173
+993
+172
+171
+75
+992
+991
+107
+59
+990
+113
+989
+38
+42
+29
+65534
+988
+74
+70
+89
+72
+1000
+53
+1001
+47
+1000
+
+]]> </Data>
+<Comment>
+[양호] : 동일한 UID로 설정된 사용자 계정이 존재하지 않는 경우
+[취약] : 동일한 UID로 설정된 사용자 계정이 존재하는 경우
+</Comment>
+<Result>
+[취약] : 동일한 UID로 설정된 사용자 계정이 존재하는 경우
+</Result>
+</U-45>
+
+<U-46>
+<Name> 사용자 shell 점검 </Name>
+<Security_Threat>
+로그인이 불필요한 계정은 일반적으로 OS 설치 시 기본적으로 생성되는 계
+정으로 쉘이 설정되어 있을 경우, 공격자는 기본 계정들을 이용하여 시스템
+에 명령어를 실행 할 수 있음
+</Security_Threat>
+<Data> <![CDATA[
+#cat /etc/passwd | grep -E "^daemon|^bin|^sys|^adm|^listen|^nobody4|^noaccess|^diag|^operator|^games|^gohper" | grep -v "admin"
+
+bin:x:1:1:bin:/bin:/sbin/nologin
+daemon:x:2:2:daemon:/sbin:/sbin/nologin
+adm:x:3:4:adm:/var/adm:/sbin/nologin
+operator:x:11:0:operator:/root:/sbin/nologin
+games:x:12:100:games:/usr/games:/sbin/nologin
+systemd-network:x:192:192:systemd Network Management:/:/sbin/nologin
+
+]]> </Data>
+<Comment>
+[양호] : 로그인이 필요하지 않은 계정에 /bin/false(/sbin/nologin) 쉘이 부여되어 있는 경우
+[취약] : 로그인이 필요하지 않은 계정에 /bin/false(/sbin/nologin) 쉘이 부여되지 않은 경우
+</Comment>
+<Result>
+[양호] : 로그인이 필요하지 않은 계정에 /bin/false(/sbin/nologin) 쉘이 부여되어 있는 경우
+</Result>
+</U-46>
+
+<U-47>
+<Name> Session Timeout 설정 </Name>
+<Security_Threat>
+Session timeout 값이 설정되지 않은 경우 유휴 시간 내 비인가자의 시스템
+접근으로 인해 불필요한 내부 정보의 노출 위험이 존재함
+</Security_Threat>
+<Data> <![CDATA[
+#cat /etc/profile | grep -v "# ^*" | grep -i "TMOUT"
+export TMOUT=700
+
+#cat /etc/.profile | grep -v "# ^*" | grep -i "TMOUT"
+
+#cat /etc/csh.login | grep -i "autologout"
+
+#cat /etc/csh.cshrc | grep -i "autologout"
+
+]]> </Data>
+<Comment>
+[양호] : Session Timeout이 600초(10분) 이하로 설정되어 있는 경우
+[취약] : Session Timeout이 600초(10분) 이하로 설정되지 않은 경우
+</Comment>
+<Result>
+[취약] : Session Timeout이 600초(10분) 이하로 설정되지 않은 경우
+</Result>
+</U-47>
+
+<U-48>
+<Name> hosts.lpd 파일 소유자 및 권한 설정 </Name>
+<Security_Threat>
+hosts.lpd 파일의 접근권한이 적절하지 않을 경우 비인가자가 /etc/hosts.lpd
+파일을 수정하여 허용된 사용자의 서비스를 방해할 수 있으며, 호스트 정보
+를 획득 할 수 있음
+</Security_Threat>
+<Data> <![CDATA[
+#ls -l /etc/hosts.lpd
+ls: cannot access /etc/hosts.lpd: No such file or directory
+
+]]> </Data>
+<Comment>
+[양호] : hosts.lpd 파일이 삭제되어 있거나 불가피하게 hosts.lpd 파일을 사용할
+시 파일의 소유자가 root이고 권한이 600인 경우
+[취약] : hosts.lpd 파일이 삭제되어 있지 않거나 파일의 소유자가 root가 아니고 권한이 600이 아닌 경우
+</Comment>
+<Result>
+[양호] : hosts.lpd 파일이 삭제된 경우
+</Result>
+</U-48>
+
+<U-49>
+<Name> UMASK 설정 관리 </Name>
+<Security_Threat>
+잘못된 UMASK 값으로 인해 파일 및 디렉터리 생성시 과도하게 퍼미션이 부여 될 수 있음
+</Security_Threat>
+<Data> <![CDATA[
+#cat /etc/profile
+# /etc/profile
+
+# System wide environment and startup programs, for login setup
+# Functions and aliases go in /etc/bashrc
+
+# It's NOT a good idea to change this file unless you know what you
+# are doing. It's much better to create a custom.sh shell script in
+# /etc/profile.d/ to make custom changes to your environment, as this
+# will prevent the need for merging in future updates.
+
+pathmunge () {
+    case ":${PATH}:" in
+        *:"$1":*)
+            ;;
+        *)
+            if [ "$2" = "after" ] ; then
+                PATH=$PATH:$1
+            else
+                PATH=$1:$PATH
+            fi
+    esac
+}
+
+
+if [ -x /usr/bin/id ]; then
+    if [ -z "$EUID" ]; then
+        # ksh workaround
+        EUID=`/usr/bin/id -u`
+        UID=`/usr/bin/id -ru`
+    fi
+    USER="`/usr/bin/id -un`"
+    LOGNAME=$USER
+    MAIL="/var/spool/mail/$USER"
+fi
+
+# Path manipulation
+if [ "$EUID" = "0" ]; then
+    pathmunge /usr/sbin
+    pathmunge /usr/local/sbin
+else
+    pathmunge /usr/local/sbin after
+    pathmunge /usr/sbin after
+fi
+
+HOSTNAME=`/usr/bin/hostname 2>/dev/null`
+HISTSIZE=1000
+if [ "$HISTCONTROL" = "ignorespace" ] ; then
+    export HISTCONTROL=ignoreboth
+else
+    export HISTCONTROL=ignoredups
+fi
+
+export PATH USER LOGNAME MAIL HOSTNAME HISTSIZE HISTCONTROL
+
+# By default, we want umask to get set. This sets it for login shell
+# Current threshold for system reserved uid/gids is 200
+# You could check uidgid reservation validity in
+# /usr/share/doc/setup-*/uidgid file
+if [ $UID -gt 199 ] && [ "`/usr/bin/id -gn`" = "`/usr/bin/id -un`" ]; then
+    umask 044
+else
+    umask 400
+fi
+
+for i in /etc/profile.d/*.sh /etc/profile.d/sh.local ; do
+    if [ -r "$i" ]; then
+        if [ "${-#*i}" != "$-" ]; then 
+            . "$i"
+        else
+            . "$i" >/dev/null
+        fi
+    fi
+done
+
+unset i
+unset -f pathmunge
+
+export TMOUT=700
+
+]]> </Data>
+<Comment>
+[양호] : UMASK 값이 022 이상으로 설정된 경우
+[취약] : UMASK 값이 022 이상으로 설정되지 않은 경우
+</Comment>
+<Result>
+[양호] : UMASK 값이 022 이상으로 설정된 경우
+</Result>
+</U-49>
+
+<U-50>
+<Name> 홈디렉토리 소유자 및 권한 설정 </Name>
+<Security_Threat>
+홈 디렉터리 내 설정파일 변조 시 정상적인 서비스 이용이 제한될 우려가 존재함
+</Security_Threat>
+<Data> <![CDATA[
+#ls -l /home
+total 8
+drwx------.  5 test test   144 Jul 15 08:31 test
+drwx------.  3 1002 teste   78 Jul 15 08:36 teste
+drwx------. 15 1002 teste 4096 Jul 15 08:33 teste1
+drwx------. 15 yeji yeji  4096 Jul 16 03:00 yeji
+
+]]> </Data>
+<Comment>
+[양호] : 홈 디렉터리 소유자가 해당 계정이고, 타 사용자 쓰기 권한이 제거된 경우
+[취약] : 홈 디렉터리 소유자가 해당 계정이 아니고, 타 사용자 쓰기 권한이 부여된 경우
+</Comment>
+<Result>
+[취약] : 홈 디렉터리 소유자가 해당 계정이 아니고, 타 사용자 쓰기 권한이 부여된 경우
+</Result>
+</U-50>
+
+<U-51>
+<Name> 홈디렉토리로 지정한 디렉토리의 존재 관리 </Name>
+<Security_Threat>
+passwd 파일에 설정된 홈디렉터리가 존재하지 않는 경우, 해당 계정으로 로
+그인시 홈디렉터리가 루트 디렉터리(“/“)로 할당되어 접근이 가능함
+</Security_Threat>
+<Data> <![CDATA[
+#cat /etc/passwd | awk -F ':' '{if (>=1000) {print ./U-51.sh}}'
+nfsnobody:x:65534:65534:Anonymous NFS User:/var/lib/nfs:/sbin/nologin
+yeji:x:1000:1000:yeji:/home/yeji:/bin/bash
+test:x:1001:1001::/home/test:/bin/bash
+choi:x:1000:1000:yeji::bin/bash
+
+]]> </Data>
+<Comment>
+[양호] : 홈 디렉터리가 존재하지 않는 계정이 발견되지 않는 경우
+[취약] : 홈 디렉터리가 존재하지 않는 계정이 발견된 경우
+</Comment>
+<Result>
+[취약] : 홈 디렉터리가 존재하지 않는 계정이 발견된 경우
+</Result>
+</U-51>
+
+<U-52>
+<Name> 숨겨진 파일 및 디렉토리 검색 및 제거 </Name>
+<Security_Threat>
+공격자는 숨겨진 파일 및 디렉터리를 통해 시스템 정보 습득, 파일 임의 변경 등을 할 수 있음
+</Security_Threat>
+<Data> <![CDATA[
+#find / -type f -name ".*"
+/boot/.vmlinuz-3.10.0-1160.el7.x86_64.hmac
+/sys/module/sg/notes/.note.gnu.build-id
+/sys/module/sg/sections/.bss
+/sys/module/sg/sections/.init.text
+/sys/module/sg/sections/.smp_locks
+/sys/module/sg/sections/.data
+/sys/module/sg/sections/.text
+/sys/module/sg/sections/.data.unlikely
+/sys/module/sg/sections/.rodata
+/sys/module/sg/sections/.strtab
+/sys/module/sg/sections/.symtab
+/sys/module/sg/sections/.text.unlikely
+/sys/module/sg/sections/.altinstructions
+/sys/module/sg/sections/.gnu.linkonce.this_module
+/sys/module/sg/sections/.altinstr_replacement
+/sys/module/sg/sections/.rodata.str1.1
+/sys/module/sg/sections/.rodata.str1.8
+/sys/module/sg/sections/.note.gnu.build-id
+/sys/module/sg/sections/.fixup
+/sys/module/sg/sections/.exit.text
+/sys/module/sg/sections/.parainstructions
+/sys/module/drm/notes/.note.gnu.build-id
+/sys/module/drm/sections/.bss
+/sys/module/drm/sections/.init.text
+/sys/module/drm/sections/.smp_locks
+/sys/module/drm/sections/.data
+/sys/module/drm/sections/.text
+/sys/module/drm/sections/.ref.data
+/sys/module/drm/sections/.data.unlikely
+/sys/module/drm/sections/.rodata
+/sys/module/drm/sections/.strtab
+/sys/module/drm/sections/.symtab
+/sys/module/drm/sections/.text.unlikely
+/sys/module/drm/sections/.altinstructions
+/sys/module/drm/sections/.gnu.linkonce.this_module
+/sys/module/drm/sections/.altinstr_replacement
+/sys/module/drm/sections/.rodata.str1.1
+/sys/module/drm/sections/.rodata.str1.8
+/sys/module/drm/sections/.note.gnu.build-id
+/sys/module/drm/sections/.exit.text
+/sys/module/drm/sections/.parainstructions
+/sys/module/drm/sections/.data..read_mostly
+/sys/module/llc/notes/.note.gnu.build-id
+/sys/module/llc/sections/.bss
+/sys/module/llc/sections/.init.text
+/sys/module/llc/sections/.smp_locks
+/sys/module/llc/sections/.data
+/sys/module/llc/sections/.text
+/sys/module/llc/sections/.strtab
+/sys/module/llc/sections/.symtab
+/sys/module/llc/sections/.gnu.linkonce.this_module
+/sys/module/llc/sections/.rodata.str1.1
+/sys/module/llc/sections/.rodata.str1.8
+/sys/module/llc/sections/.note.gnu.build-id
+/sys/module/llc/sections/.exit.text
+/sys/module/llc/sections/.data..read_mostly
+/sys/module/lrw/notes/.note.gnu.build-id
+/sys/module/lrw/sections/.init.text
+/sys/module/lrw/sections/.data
+/sys/module/lrw/sections/.text
+/sys/module/lrw/sections/.strtab
+/sys/module/lrw/sections/.symtab
+/sys/module/lrw/sections/.gnu.linkonce.this_module
+/sys/module/lrw/sections/.rodata.str1.1
+/sys/module/lrw/sections/.note.gnu.build-id
+/sys/module/lrw/sections/.exit.text
+/sys/module/snd/notes/.note.gnu.build-id
+/sys/module/snd/sections/.bss
+/sys/module/snd/sections/.init.text
+/sys/module/snd/sections/.smp_locks
+/sys/module/snd/sections/.data
+/sys/module/snd/sections/.text
+/sys/module/snd/sections/.rodata
+/sys/module/snd/sections/.strtab
+/sys/module/snd/sections/.symtab
+/sys/module/snd/sections/.gnu.linkonce.this_module
+/sys/module/snd/sections/.rodata.str1.1
+/sys/module/snd/sections/.rodata.str1.8
+/sys/module/snd/sections/.note.gnu.build-id
+/sys/module/snd/sections/.exit.text
+/sys/module/snd/sections/.parainstructions
+/sys/module/stp/notes/.note.gnu.build-id
+/sys/module/stp/sections/.bss
+/sys/module/stp/sections/.smp_locks
+/sys/module/stp/sections/.data
+/sys/module/stp/sections/.text
+/sys/module/stp/sections/.strtab
+/sys/module/stp/sections/.symtab
+/sys/module/stp/sections/.gnu.linkonce.this_module
+/sys/module/stp/sections/.note.gnu.build-id
+/sys/module/stp/sections/.data..read_mostly
+/sys/module/ttm/notes/.note.gnu.build-id
+/sys/module/ttm/sections/.bss
+/sys/module/ttm/sections/.init.text
+/sys/module/ttm/sections/.smp_locks
+/sys/module/ttm/sections/.data
+/sys/module/ttm/sections/.text
+/sys/module/ttm/sections/.data.unlikely
+/sys/module/ttm/sections/.rodata
+/sys/module/ttm/sections/.strtab
+/sys/module/ttm/sections/.symtab
+/sys/module/ttm/sections/.text.unlikely
+/sys/module/ttm/sections/.gnu.linkonce.this_module
+/sys/module/ttm/sections/.rodata.str1.1
+/sys/module/ttm/sections/.rodata.str1.8
+/sys/module/ttm/sections/.note.gnu.build-id
+/sys/module/ttm/sections/.exit.text
+/sys/module/ttm/sections/.parainstructions
+/sys/module/tun/notes/.note.gnu.build-id
+/sys/module/tun/sections/.init.text
+/sys/module/tun/sections/.smp_locks
+/sys/module/tun/sections/.data
+/sys/module/tun/sections/.text
+/sys/module/tun/sections/.data.unlikely
+/sys/module/tun/sections/.rodata
+/sys/module/tun/sections/.strtab
+/sys/module/tun/sections/.symtab
+/sys/module/tun/sections/.gnu.linkonce.this_module
+/sys/module/tun/sections/.rodata.str1.1
+/sys/module/tun/sections/.rodata.str1.8
+/sys/module/tun/sections/.note.gnu.build-id
+/sys/module/tun/sections/.parainstructions
+/sys/module/tun/sections/.data..read_mostly
+/sys/module/xfs/notes/.note.gnu.build-id
+/sys/module/xfs/sections/.bss
+/sys/module/xfs/sections/.init.text
+/sys/module/xfs/sections/.smp_locks
+/sys/module/xfs/sections/.data
+/sys/module/xfs/sections/.text
+/sys/module/xfs/sections/.ref.data
+/sys/module/xfs/sections/.data.unlikely
+/sys/module/xfs/sections/.rodata
+/sys/module/xfs/sections/.strtab
+/sys/module/xfs/sections/.symtab
+/sys/module/xfs/sections/.text.unlikely
+/sys/module/xfs/sections/.altinstructions
+/sys/module/xfs/sections/.gnu.linkonce.this_module
+/sys/module/xfs/sections/.altinstr_replacement
+/sys/module/xfs/sections/.rodata.str1.1
+/sys/module/xfs/sections/.rodata.str1.8
+/sys/module/xfs/sections/.note.gnu.build-id
+/sys/module/xfs/sections/.exit.text
+/sys/module/xfs/sections/.parainstructions
+/sys/module/ghash_clmulni_intel/notes/.note.gnu.build-id
+/sys/module/ghash_clmulni_intel/sections/.init.text
+/sys/module/ghash_clmulni_intel/sections/.data
+/sys/module/ghash_clmulni_intel/sections/.text
+/sys/module/ghash_clmulni_intel/sections/.data.unlikely
+/sys/module/ghash_clmulni_intel/sections/.rodata
+/sys/module/ghash_clmulni_intel/sections/.strtab
+/sys/module/ghash_clmulni_intel/sections/.symtab
+/sys/module/ghash_clmulni_intel/sections/.gnu.linkonce.this_module
+/sys/module/ghash_clmulni_intel/sections/.rodata.str1.1
+/sys/module/ghash_clmulni_intel/sections/.note.gnu.build-id
+/sys/module/ghash_clmulni_intel/sections/.exit.text
+/sys/module/bnep/notes/.note.gnu.build-id
+/sys/module/bnep/sections/.init.text
+/sys/module/bnep/sections/.smp_locks
+/sys/module/bnep/sections/.data
+/sys/module/bnep/sections/.text
+/sys/module/bnep/sections/.rodata
+/sys/module/bnep/sections/.strtab
+/sys/module/bnep/sections/.symtab
+/sys/module/bnep/sections/.text.unlikely
+/sys/module/bnep/sections/.gnu.linkonce.this_module
+/sys/module/bnep/sections/.rodata.str1.1
+/sys/module/bnep/sections/.rodata.str1.8
+/sys/module/bnep/sections/.note.gnu.build-id
+/sys/module/bnep/sections/.exit.text
+/sys/module/fuse/notes/.note.gnu.build-id
+/sys/module/fuse/sections/.bss
+/sys/module/fuse/sections/.init.text
+/sys/module/fuse/sections/.smp_locks
+/sys/module/fuse/sections/.data
+/sys/module/fuse/sections/.text
+/sys/module/fuse/sections/.data.unlikely
+/sys/module/fuse/sections/.rodata
+/sys/module/fuse/sections/.strtab
+/sys/module/fuse/sections/.symtab
+/sys/module/fuse/sections/.text.unlikely
+/sys/module/fuse/sections/.gnu.linkonce.this_module
+/sys/module/fuse/sections/.rodata.str1.1
+/sys/module/fuse/sections/.rodata.str1.8
+/sys/module/fuse/sections/.note.gnu.build-id
+/sys/module/fuse/sections/.exit.text
+/sys/module/fuse/sections/.parainstructions
+/sys/module/nfit/notes/.note.gnu.build-id
+/sys/module/nfit/sections/.bss
+/sys/module/nfit/sections/.init.text
+/sys/module/nfit/sections/.smp_locks
+/sys/module/nfit/sections/.data
+/sys/module/nfit/sections/.text
+/sys/module/nfit/sections/.data.unlikely
+/sys/module/nfit/sections/.rodata
+/sys/module/nfit/sections/.strtab
+/sys/module/nfit/sections/.symtab
+/sys/module/nfit/sections/.gnu.linkonce.this_module
+/sys/module/nfit/sections/.rodata.str1.1
+/sys/module/nfit/sections/.rodata.str1.8
+/sys/module/nfit/sections/.note.gnu.build-id
+/sys/module/nfit/sections/.exit.text
+/sys/module/nfit/sections/.parainstructions
+/sys/module/syscopyarea/notes/.note.gnu.build-id
+/sys/module/syscopyarea/sections/.text
+/sys/module/syscopyarea/sections/.strtab
+/sys/module/syscopyarea/sections/.symtab
+/sys/module/syscopyarea/sections/.gnu.linkonce.this_module
+/sys/module/syscopyarea/sections/.note.gnu.build-id
+/sys/module/iptable_security/notes/.note.gnu.build-id
+/sys/module/iptable_security/sections/.init.text
+/sys/module/iptable_security/sections/.data
+/sys/module/iptable_security/sections/.text
+/sys/module/iptable_security/sections/.rodata
+/sys/module/iptable_security/sections/.strtab
+/sys/module/iptable_security/sections/.symtab
+/sys/module/iptable_security/sections/.gnu.linkonce.this_module
+/sys/module/iptable_security/sections/.note.gnu.build-id
+/sys/module/iptable_security/sections/.exit.text
+/sys/module/iptable_security/sections/.data..read_mostly
+/sys/module/devlink/notes/.note.gnu.build-id
+/sys/module/devlink/sections/.init.text
+/sys/module/devlink/sections/.data
+/sys/module/devlink/sections/.text
+/sys/module/devlink/sections/.ref.data
+/sys/module/devlink/sections/.data.unlikely
+/sys/module/devlink/sections/.rodata
+/sys/module/devlink/sections/.strtab
+/sys/module/devlink/sections/.symtab
+/sys/module/devlink/sections/.gnu.linkonce.this_module
+/sys/module/devlink/sections/.rodata.str1.1
+/sys/module/devlink/sections/.rodata.str1.8
+/sys/module/devlink/sections/.note.gnu.build-id
+/sys/module/devlink/sections/.exit.text
+/sys/module/devlink/sections/.parainstructions
+/sys/module/serio_raw/notes/.note.gnu.build-id
+/sys/module/serio_raw/sections/.bss
+/sys/module/serio_raw/sections/.init.text
+/sys/module/serio_raw/sections/.smp_locks
+/sys/module/serio_raw/sections/.data
+/sys/module/serio_raw/sections/.text
+/sys/module/serio_raw/sections/.data.unlikely
+/sys/module/serio_raw/sections/.rodata
+/sys/module/serio_raw/sections/.strtab
+/sys/module/serio_raw/sections/.symtab
+/sys/module/serio_raw/sections/.gnu.linkonce.this_module
+/sys/module/serio_raw/sections/.rodata.str1.1
+/sys/module/serio_raw/sections/.rodata.str1.8
+/sys/module/serio_raw/sections/.note.gnu.build-id
+/sys/module/serio_raw/sections/.exit.text
+/sys/module/serio_raw/sections/.parainstructions
+/sys/module/drm_panel_orientation_quirks/notes/.note.gnu.build-id
+/sys/module/drm_panel_orientation_quirks/sections/.text
+/sys/module/drm_panel_orientation_quirks/sections/.rodata
+/sys/module/drm_panel_orientation_quirks/sections/.strtab
+/sys/module/drm_panel_orientation_quirks/sections/.symtab
+/sys/module/drm_panel_orientation_quirks/sections/.gnu.linkonce.this_module
+/sys/module/drm_panel_orientation_quirks/sections/.rodata.str1.1
+/sys/module/drm_panel_orientation_quirks/sections/.note.gnu.build-id
+/sys/module/crct10dif_common/notes/.note.gnu.build-id
+/sys/module/crct10dif_common/sections/.text
+/sys/module/crct10dif_common/sections/.rodata
+/sys/module/crct10dif_common/sections/.strtab
+/sys/module/crct10dif_common/sections/.symtab
+/sys/module/crct10dif_common/sections/.gnu.linkonce.this_module
+/sys/module/crct10dif_common/sections/.note.gnu.build-id
+/sys/module/nfnetlink/notes/.note.gnu.build-id
+/sys/module/nfnetlink/sections/.bss
+/sys/module/nfnetlink/sections/.init.data
+/sys/module/nfnetlink/sections/.init.text
+/sys/module/nfnetlink/sections/.data
+/sys/module/nfnetlink/sections/.text
+/sys/module/nfnetlink/sections/.rodata
+/sys/module/nfnetlink/sections/.strtab
+/sys/module/nfnetlink/sections/.symtab
+/sys/module/nfnetlink/sections/.gnu.linkonce.this_module
+/sys/module/nfnetlink/sections/.rodata.str1.1
+/sys/module/nfnetlink/sections/.rodata.str1.8
+/sys/module/nfnetlink/sections/.note.gnu.build-id
+/sys/module/nfnetlink/sections/.exit.text
+/sys/module/scsi_transport_spi/notes/.note.gnu.build-id
+/sys/module/scsi_transport_spi/sections/.init.data
+/sys/module/scsi_transport_spi/sections/.init.text
+/sys/module/scsi_transport_spi/sections/.data
+/sys/module/scsi_transport_spi/sections/.text
+/sys/module/scsi_transport_spi/sections/.rodata
+/sys/module/scsi_transport_spi/sections/.strtab
+/sys/module/scsi_transport_spi/sections/.symtab
+/sys/module/scsi_transport_spi/sections/.text.unlikely
+/sys/module/scsi_transport_spi/sections/.gnu.linkonce.this_module
+/sys/module/scsi_transport_spi/sections/.rodata.str1.1
+/sys/module/scsi_transport_spi/sections/.rodata.str1.8
+/sys/module/scsi_transport_spi/sections/.note.gnu.build-id
+/sys/module/scsi_transport_spi/sections/.exit.text
+/sys/module/ip6table_filter/notes/.note.gnu.build-id
+/sys/module/ip6table_filter/sections/.init.text
+/sys/module/ip6table_filter/sections/.data
+/sys/module/ip6table_filter/sections/.text
+/sys/module/ip6table_filter/sections/.rodata
+/sys/module/ip6table_filter/sections/.strtab
+/sys/module/ip6table_filter/sections/.symtab
+/sys/module/ip6table_filter/sections/.gnu.linkonce.this_module
+/sys/module/ip6table_filter/sections/.note.gnu.build-id
+/sys/module/ip6table_filter/sections/.exit.text
+/sys/module/ip6table_filter/sections/.data..read_mostly
+/sys/module/iosf_mbi/notes/.note.gnu.build-id
+/sys/module/iosf_mbi/sections/.bss
+/sys/module/iosf_mbi/sections/.init.text
+/sys/module/iosf_mbi/sections/.data
+/sys/module/iosf_mbi/sections/.text
+/sys/module/iosf_mbi/sections/.rodata
+/sys/module/iosf_mbi/sections/.strtab
+/sys/module/iosf_mbi/sections/.symtab
+/sys/module/iosf_mbi/sections/.gnu.linkonce.this_module
+/sys/module/iosf_mbi/sections/.rodata.str1.1
+/sys/module/iosf_mbi/sections/.rodata.str1.8
+/sys/module/iosf_mbi/sections/.note.gnu.build-id
+/sys/module/iosf_mbi/sections/.exit.text
+/sys/module/e1000/notes/.note.gnu.build-id
+/sys/module/e1000/sections/.bss
+/sys/module/e1000/sections/.init.text
+/sys/module/e1000/sections/.smp_locks
+/sys/module/e1000/sections/.data
+/sys/module/e1000/sections/.text
+/sys/module/e1000/sections/.data.unlikely
+/sys/module/e1000/sections/.rodata
+/sys/module/e1000/sections/.strtab
+/sys/module/e1000/sections/.symtab
+/sys/module/e1000/sections/.text.unlikely
+/sys/module/e1000/sections/.gnu.linkonce.this_module
+/sys/module/e1000/sections/.rodata.str1.1
+/sys/module/e1000/sections/.rodata.str1.8
+/sys/module/e1000/sections/.note.gnu.build-id
+/sys/module/e1000/sections/.exit.text
+/sys/module/e1000/sections/.parainstructions
+/sys/module/e1000/sections/.data..read_mostly
+/sys/module/libnvdimm/notes/.note.gnu.build-id
+/sys/module/libnvdimm/sections/.bss
+/sys/module/libnvdimm/sections/.init.text
+/sys/module/libnvdimm/sections/.smp_locks
+/sys/module/libnvdimm/sections/.data
+/sys/module/libnvdimm/sections/.text
+/sys/module/libnvdimm/sections/.data.unlikely
+/sys/module/libnvdimm/sections/.rodata
+/sys/module/libnvdimm/sections/.strtab
+/sys/module/libnvdimm/sections/.symtab
+/sys/module/libnvdimm/sections/.text.unlikely
+/sys/module/libnvdimm/sections/.altinstructions
+/sys/module/libnvdimm/sections/.gnu.linkonce.this_module
+/sys/module/libnvdimm/sections/.altinstr_replacement
+/sys/module/libnvdimm/sections/.rodata.str1.1
+/sys/module/libnvdimm/sections/.rodata.str1.8
+/sys/module/libnvdimm/sections/.note.gnu.build-id
+/sys/module/libnvdimm/sections/.exit.text
+/sys/module/libnvdimm/sections/.parainstructions
+/sys/module/libnvdimm/sections/.data..read_mostly
+/sys/module/cdrom/notes/.note.gnu.build-id
+/sys/module/cdrom/sections/.bss
+/sys/module/cdrom/sections/.init.text
+/sys/module/cdrom/sections/.data
+/sys/module/cdrom/sections/.text
+/sys/module/cdrom/sections/.rodata
+/sys/module/cdrom/sections/.strtab
+/sys/module/cdrom/sections/.symtab
+/sys/module/cdrom/sections/.text.unlikely
+/sys/module/cdrom/sections/.gnu.linkonce.this_module
+/sys/module/cdrom/sections/.rodata.str1.1
+/sys/module/cdrom/sections/.rodata.str1.8
+/sys/module/cdrom/sections/.note.gnu.build-id
+/sys/module/cdrom/sections/.exit.text
+/sys/module/btbcm/notes/.note.gnu.build-id
+/sys/module/btbcm/sections/.smp_locks
+/sys/module/btbcm/sections/.text
+/sys/module/btbcm/sections/.rodata
+/sys/module/btbcm/sections/.strtab
+/sys/module/btbcm/sections/.symtab
+/sys/module/btbcm/sections/.gnu.linkonce.this_module
+/sys/module/btbcm/sections/.rodata.str1.1
+/sys/module/btbcm/sections/.rodata.str1.8
+/sys/module/btbcm/sections/.note.gnu.build-id
+/sys/module/btrtl/notes/.note.gnu.build-id
+/sys/module/btrtl/sections/.text
+/sys/module/btrtl/sections/.rodata
+/sys/module/btrtl/sections/.strtab
+/sys/module/btrtl/sections/.symtab
+/sys/module/btrtl/sections/.gnu.linkonce.this_module
+/sys/module/btrtl/sections/.rodata.str1.1
+/sys/module/btrtl/sections/.rodata.str1.8
+/sys/module/btrtl/sections/.note.gnu.build-id
+/sys/module/btusb/notes/.note.gnu.build-id
+/sys/module/btusb/sections/.bss
+/sys/module/btusb/sections/.init.text
+/sys/module/btusb/sections/.smp_locks
+/sys/module/btusb/sections/.data
+/sys/module/btusb/sections/.text
+/sys/module/btusb/sections/.rodata
+/sys/module/btusb/sections/.strtab
+/sys/module/btusb/sections/.symtab
+/sys/module/btusb/sections/.gnu.linkonce.this_module
+/sys/module/btusb/sections/.rodata.str1.1
+/sys/module/btusb/sections/.rodata.str1.8
+/sys/module/btusb/sections/.note.gnu.build-id
+/sys/module/btusb/sections/.exit.text
+/sys/module/btusb/sections/.parainstructions
+/sys/module/pata_acpi/notes/.note.gnu.build-id
+/sys/module/pata_acpi/sections/.init.text
+/sys/module/pata_acpi/sections/.data
+/sys/module/pata_acpi/sections/.text
+/sys/module/pata_acpi/sections/.rodata
+/sys/module/pata_acpi/sections/.strtab
+/sys/module/pata_acpi/sections/.symtab
+/sys/module/pata_acpi/sections/.gnu.linkonce.this_module
+/sys/module/pata_acpi/sections/.rodata.str1.1
+/sys/module/pata_acpi/sections/.rodata.str1.8
+/sys/module/pata_acpi/sections/.note.gnu.build-id
+/sys/module/pata_acpi/sections/.exit.text
+/sys/module/ppdev/notes/.note.gnu.build-id
+/sys/module/ppdev/sections/.bss
+/sys/module/ppdev/sections/.init.text
+/sys/module/ppdev/sections/.smp_locks
+/sys/module/ppdev/sections/.data
+/sys/module/ppdev/sections/.text
+/sys/module/ppdev/sections/.rodata
+/sys/module/ppdev/sections/.strtab
+/sys/module/ppdev/sections/.symtab
+/sys/module/ppdev/sections/.gnu.linkonce.this_module
+/sys/module/ppdev/sections/.rodata.str1.1
+/sys/module/ppdev/sections/.rodata.str1.8
+/sys/module/ppdev/sections/.note.gnu.build-id
+/sys/module/ppdev/sections/.exit.text
+/sys/module/vsock/notes/.note.gnu.build-id
+/sys/module/vsock/sections/.bss
+/sys/module/vsock/sections/.init.text
+/sys/module/vsock/sections/.smp_locks
+/sys/module/vsock/sections/.data
+/sys/module/vsock/sections/.text
+/sys/module/vsock/sections/.rodata
+/sys/module/vsock/sections/.strtab
+/sys/module/vsock/sections/.symtab
+/sys/module/vsock/sections/.gnu.linkonce.this_module
+/sys/module/vsock/sections/.rodata.str1.1
+/sys/module/vsock/sections/.rodata.str1.8
+/sys/module/vsock/sections/.note.gnu.build-id
+/sys/module/vsock/sections/.exit.text
+/sys/module/vsock/sections/.parainstructions
+/sys/module/vsock/sections/.data..read_mostly
+/sys/module/binfmt_misc/notes/.note.gnu.build-id
+/sys/module/binfmt_misc/sections/.bss
+/sys/module/binfmt_misc/sections/.init.text
+/sys/module/binfmt_misc/sections/.smp_locks
+/sys/module/binfmt_misc/sections/.data
+/sys/module/binfmt_misc/sections/.text
+/sys/module/binfmt_misc/sections/.rodata
+/sys/module/binfmt_misc/sections/.strtab
+/sys/module/binfmt_misc/sections/.symtab
+/sys/module/binfmt_misc/sections/.text.unlikely
+/sys/module/binfmt_misc/sections/.gnu.linkonce.this_module
+/sys/module/binfmt_misc/sections/.rodata.str1.1
+/sys/module/binfmt_misc/sections/.note.gnu.build-id
+/sys/module/binfmt_misc/sections/.exit.text
+/sys/module/ip6table_mangle/notes/.note.gnu.build-id
+/sys/module/ip6table_mangle/sections/.init.text
+/sys/module/ip6table_mangle/sections/.data
+/sys/module/ip6table_mangle/sections/.text
+/sys/module/ip6table_mangle/sections/.rodata
+/sys/module/ip6table_mangle/sections/.strtab
+/sys/module/ip6table_mangle/sections/.symtab
+/sys/module/ip6table_mangle/sections/.gnu.linkonce.this_module
+/sys/module/ip6table_mangle/sections/.note.gnu.build-id
+/sys/module/ip6table_mangle/sections/.exit.text
+/sys/module/ip6table_mangle/sections/.data..read_mostly
+/sys/module/snd_ac97_codec/notes/.note.gnu.build-id
+/sys/module/snd_ac97_codec/sections/.bss
+/sys/module/snd_ac97_codec/sections/.smp_locks
+/sys/module/snd_ac97_codec/sections/.data
+/sys/module/snd_ac97_codec/sections/.text
+/sys/module/snd_ac97_codec/sections/.rodata
+/sys/module/snd_ac97_codec/sections/.strtab
+/sys/module/snd_ac97_codec/sections/.symtab
+/sys/module/snd_ac97_codec/sections/.gnu.linkonce.this_module
+/sys/module/snd_ac97_codec/sections/.rodata.str1.1
+/sys/module/snd_ac97_codec/sections/.rodata.str1.8
+/sys/module/snd_ac97_codec/sections/.note.gnu.build-id
+/sys/module/snd_ac97_codec/sections/.parainstructions
+/sys/module/ip6t_rpfilter/notes/.note.gnu.build-id
+/sys/module/ip6t_rpfilter/sections/.init.text
+/sys/module/ip6t_rpfilter/sections/.text
+/sys/module/ip6t_rpfilter/sections/.strtab
+/sys/module/ip6t_rpfilter/sections/.symtab
+/sys/module/ip6t_rpfilter/sections/.gnu.linkonce.this_module
+/sys/module/ip6t_rpfilter/sections/.rodata.str1.1
+/sys/module/ip6t_rpfilter/sections/.rodata.str1.8
+/sys/module/ip6t_rpfilter/sections/.note.gnu.build-id
+/sys/module/ip6t_rpfilter/sections/.exit.text
+/sys/module/ip6t_rpfilter/sections/.data..read_mostly
+/sys/module/i2c_piix4/notes/.note.gnu.build-id
+/sys/module/i2c_piix4/sections/.bss
+/sys/module/i2c_piix4/sections/.init.text
+/sys/module/i2c_piix4/sections/.data
+/sys/module/i2c_piix4/sections/.text
+/sys/module/i2c_piix4/sections/.rodata
+/sys/module/i2c_piix4/sections/.strtab
+/sys/module/i2c_piix4/sections/.symtab
+/sys/module/i2c_piix4/sections/.gnu.linkonce.this_module
+/sys/module/i2c_piix4/sections/.rodata.str1.1
+/sys/module/i2c_piix4/sections/.rodata.str1.8
+/sys/module/i2c_piix4/sections/.note.gnu.build-id
+/sys/module/i2c_piix4/sections/.exit.text
+/sys/module/crct10dif_pclmul/notes/.note.gnu.build-id
+/sys/module/crct10dif_pclmul/sections/.init.text
+/sys/module/crct10dif_pclmul/sections/.data
+/sys/module/crct10dif_pclmul/sections/.text
+/sys/module/crct10dif_pclmul/sections/.data.unlikely
+/sys/module/crct10dif_pclmul/sections/.rodata
+/sys/module/crct10dif_pclmul/sections/.strtab
+/sys/module/crct10dif_pclmul/sections/.symtab
+/sys/module/crct10dif_pclmul/sections/.gnu.linkonce.this_module
+/sys/module/crct10dif_pclmul/sections/.rodata.str1.1
+/sys/module/crct10dif_pclmul/sections/.note.gnu.build-id
+/sys/module/crct10dif_pclmul/sections/.exit.text
+/sys/module/sysimgblt/notes/.note.gnu.build-id
+/sys/module/sysimgblt/sections/.text
+/sys/module/sysimgblt/sections/.rodata
+/sys/module/sysimgblt/sections/.strtab
+/sys/module/sysimgblt/sections/.symtab
+/sys/module/sysimgblt/sections/.gnu.linkonce.this_module
+/sys/module/sysimgblt/sections/.note.gnu.build-id
+/sys/module/snd_timer/notes/.note.gnu.build-id
+/sys/module/snd_timer/sections/.bss
+/sys/module/snd_timer/sections/.init.text
+/sys/module/snd_timer/sections/.smp_locks
+/sys/module/snd_timer/sections/.data
+/sys/module/snd_timer/sections/.text
+/sys/module/snd_timer/sections/.rodata
+/sys/module/snd_timer/sections/.strtab
+/sys/module/snd_timer/sections/.symtab
+/sys/module/snd_timer/sections/.text.unlikely
+/sys/module/snd_timer/sections/.gnu.linkonce.this_module
+/sys/module/snd_timer/sections/.rodata.str1.1
+/sys/module/snd_timer/sections/.rodata.str1.8
+/sys/module/snd_timer/sections/.note.gnu.build-id
+/sys/module/snd_timer/sections/.exit.text
+/sys/module/snd_timer/sections/.parainstructions
+/sys/module/xt_CHECKSUM/notes/.note.gnu.build-id
+/sys/module/xt_CHECKSUM/sections/.init.text
+/sys/module/xt_CHECKSUM/sections/.text
+/sys/module/xt_CHECKSUM/sections/.strtab
+/sys/module/xt_CHECKSUM/sections/.symtab
+/sys/module/xt_CHECKSUM/sections/.gnu.linkonce.this_module
+/sys/module/xt_CHECKSUM/sections/.rodata.str1.1
+/sys/module/xt_CHECKSUM/sections/.rodata.str1.8
+/sys/module/xt_CHECKSUM/sections/.note.gnu.build-id
+/sys/module/xt_CHECKSUM/sections/.exit.text
+/sys/module/xt_CHECKSUM/sections/.data..read_mostly
+/sys/module/aesni_intel/notes/.note.gnu.build-id
+/sys/module/aesni_intel/sections/.bss
+/sys/module/aesni_intel/sections/.init.text
+/sys/module/aesni_intel/sections/.data
+/sys/module/aesni_intel/sections/.text
+/sys/module/aesni_intel/sections/.data.unlikely
+/sys/module/aesni_intel/sections/.rodata
+/sys/module/aesni_intel/sections/.strtab
+/sys/module/aesni_intel/sections/.symtab
+/sys/module/aesni_intel/sections/.altinstructions
+/sys/module/aesni_intel/sections/.gnu.linkonce.this_module
+/sys/module/aesni_intel/sections/.altinstr_replacement
+/sys/module/aesni_intel/sections/.rodata.str1.1
+/sys/module/aesni_intel/sections/.rodata.str1.8
+/sys/module/aesni_intel/sections/.note.gnu.build-id
+/sys/module/aesni_intel/sections/.exit.text
+/sys/module/ip_tables/notes/.note.gnu.build-id
+/sys/module/ip_tables/sections/.bss
+/sys/module/ip_tables/sections/.init.text
+/sys/module/ip_tables/sections/.data
+/sys/module/ip_tables/sections/.text
+/sys/module/ip_tables/sections/.rodata
+/sys/module/ip_tables/sections/.strtab
+/sys/module/ip_tables/sections/.symtab
+/sys/module/ip_tables/sections/.altinstructions
+/sys/module/ip_tables/sections/.gnu.linkonce.this_module
+/sys/module/ip_tables/sections/.altinstr_replacement
+/sys/module/ip_tables/sections/.rodata.str1.1
+/sys/module/ip_tables/sections/.rodata.str1.8
+/sys/module/ip_tables/sections/.note.gnu.build-id
+/sys/module/ip_tables/sections/.exit.text
+/sys/module/ip_tables/sections/.data..read_mostly
+/sys/module/dm_region_hash/notes/.note.gnu.build-id
+/sys/module/dm_region_hash/sections/.smp_locks
+/sys/module/dm_region_hash/sections/.text
+/sys/module/dm_region_hash/sections/.strtab
+/sys/module/dm_region_hash/sections/.symtab
+/sys/module/dm_region_hash/sections/.gnu.linkonce.this_module
+/sys/module/dm_region_hash/sections/.rodata.str1.1
+/sys/module/dm_region_hash/sections/.rodata.str1.8
+/sys/module/dm_region_hash/sections/.note.gnu.build-id
+/sys/module/dm_region_hash/sections/.parainstructions
+/sys/module/ablk_helper/notes/.note.gnu.build-id
+/sys/module/ablk_helper/sections/.text
+/sys/module/ablk_helper/sections/.strtab
+/sys/module/ablk_helper/sections/.symtab
+/sys/module/ablk_helper/sections/.gnu.linkonce.this_module
+/sys/module/ablk_helper/sections/.rodata.str1.1
+/sys/module/ablk_helper/sections/.note.gnu.build-id
+/sys/module/drm_kms_helper/notes/.note.gnu.build-id
+/sys/module/drm_kms_helper/sections/.bss
+/sys/module/drm_kms_helper/sections/.init.text
+/sys/module/drm_kms_helper/sections/.smp_locks
+/sys/module/drm_kms_helper/sections/.data
+/sys/module/drm_kms_helper/sections/.text
+/sys/module/drm_kms_helper/sections/.data.unlikely
+/sys/module/drm_kms_helper/sections/.rodata
+/sys/module/drm_kms_helper/sections/.strtab
+/sys/module/drm_kms_helper/sections/.symtab
+/sys/module/drm_kms_helper/sections/.text.unlikely
+/sys/module/drm_kms_helper/sections/.altinstructions
+/sys/module/drm_kms_helper/sections/.gnu.linkonce.this_module
+/sys/module/drm_kms_helper/sections/.altinstr_replacement
+/sys/module/drm_kms_helper/sections/.rodata.str1.1
+/sys/module/drm_kms_helper/sections/.rodata.str1.8
+/sys/module/drm_kms_helper/sections/.note.gnu.build-id
+/sys/module/drm_kms_helper/sections/.exit.text
+/sys/module/drm_kms_helper/sections/.parainstructions
+/sys/module/drm_kms_helper/sections/.data..read_mostly
+/sys/module/ipt_MASQUERADE/notes/.note.gnu.build-id
+/sys/module/ipt_MASQUERADE/sections/.init.text
+/sys/module/ipt_MASQUERADE/sections/.text
+/sys/module/ipt_MASQUERADE/sections/.rodata
+/sys/module/ipt_MASQUERADE/sections/.strtab
+/sys/module/ipt_MASQUERADE/sections/.symtab
+/sys/module/ipt_MASQUERADE/sections/.gnu.linkonce.this_module
+/sys/module/ipt_MASQUERADE/sections/.rodata.str1.1
+/sys/module/ipt_MASQUERADE/sections/.rodata.str1.8
+/sys/module/ipt_MASQUERADE/sections/.note.gnu.build-id
+/sys/module/ipt_MASQUERADE/sections/.exit.text
+/sys/module/ipt_MASQUERADE/sections/.data..read_mostly
+/sys/module/fb_sys_fops/notes/.note.gnu.build-id
+/sys/module/fb_sys_fops/sections/.text
+/sys/module/fb_sys_fops/sections/.strtab
+/sys/module/fb_sys_fops/sections/.symtab
+/sys/module/fb_sys_fops/sections/.gnu.linkonce.this_module
+/sys/module/fb_sys_fops/sections/.note.gnu.build-id
+/sys/module/snd_pcm/notes/.note.gnu.build-id
+/sys/module/snd_pcm/sections/.bss
+/sys/module/snd_pcm/sections/.init.text
+/sys/module/snd_pcm/sections/.smp_locks
+/sys/module/snd_pcm/sections/.data
+/sys/module/snd_pcm/sections/.text
+/sys/module/snd_pcm/sections/.rodata
+/sys/module/snd_pcm/sections/.strtab
+/sys/module/snd_pcm/sections/.symtab
+/sys/module/snd_pcm/sections/.altinstructions
+/sys/module/snd_pcm/sections/.gnu.linkonce.this_module
+/sys/module/snd_pcm/sections/.altinstr_replacement
+/sys/module/snd_pcm/sections/.rodata.str1.1
+/sys/module/snd_pcm/sections/.rodata.str1.8
+/sys/module/snd_pcm/sections/.note.gnu.build-id
+/sys/module/snd_pcm/sections/.fixup
+/sys/module/snd_pcm/sections/.exit.text
+/sys/module/snd_pcm/sections/.parainstructions
+/sys/module/snd_seq/notes/.note.gnu.build-id
+/sys/module/snd_seq/sections/.bss
+/sys/module/snd_seq/sections/.init.text
+/sys/module/snd_seq/sections/.smp_locks
+/sys/module/snd_seq/sections/.data
+/sys/module/snd_seq/sections/.text
+/sys/module/snd_seq/sections/.rodata
+/sys/module/snd_seq/sections/.strtab
+/sys/module/snd_seq/sections/.symtab
+/sys/module/snd_seq/sections/.gnu.linkonce.this_module
+/sys/module/snd_seq/sections/.rodata.str1.1
+/sys/module/snd_seq/sections/.rodata.str1.8
+/sys/module/snd_seq/sections/.note.gnu.build-id
+/sys/module/snd_seq/sections/.exit.text
+/sys/module/snd_seq/sections/.parainstructions
+/sys/module/snd_rawmidi/notes/.note.gnu.build-id
+/sys/module/snd_rawmidi/sections/.bss
+/sys/module/snd_rawmidi/sections/.init.text
+/sys/module/snd_rawmidi/sections/.smp_locks
+/sys/module/snd_rawmidi/sections/.data
+/sys/module/snd_rawmidi/sections/.text
+/sys/module/snd_rawmidi/sections/.rodata
+/sys/module/snd_rawmidi/sections/.strtab
+/sys/module/snd_rawmidi/sections/.symtab
+/sys/module/snd_rawmidi/sections/.gnu.linkonce.this_module
+/sys/module/snd_rawmidi/sections/.rodata.str1.1
+/sys/module/snd_rawmidi/sections/.rodata.str1.8
+/sys/module/snd_rawmidi/sections/.note.gnu.build-id
+/sys/module/snd_rawmidi/sections/.exit.text
+/sys/module/snd_rawmidi/sections/.parainstructions
+/sys/module/crc32c_intel/notes/.note.gnu.build-id
+/sys/module/crc32c_intel/sections/.init.text
+/sys/module/crc32c_intel/sections/.data
+/sys/module/crc32c_intel/sections/.text
+/sys/module/crc32c_intel/sections/.data.unlikely
+/sys/module/crc32c_intel/sections/.rodata
+/sys/module/crc32c_intel/sections/.strtab
+/sys/module/crc32c_intel/sections/.symtab
+/sys/module/crc32c_intel/sections/.altinstructions
+/sys/module/crc32c_intel/sections/.gnu.linkonce.this_module
+/sys/module/crc32c_intel/sections/.altinstr_replacement
+/sys/module/crc32c_intel/sections/.rodata.str1.1
+/sys/module/crc32c_intel/sections/.note.gnu.build-id
+/sys/module/crc32c_intel/sections/.exit.text
+/sys/module/snd_seq_midi_event/notes/.note.gnu.build-id
+/sys/module/snd_seq_midi_event/sections/.data
+/sys/module/snd_seq_midi_event/sections/.text
+/sys/module/snd_seq_midi_event/sections/.rodata
+/sys/module/snd_seq_midi_event/sections/.strtab
+/sys/module/snd_seq_midi_event/sections/.symtab
+/sys/module/snd_seq_midi_event/sections/.gnu.linkonce.this_module
+/sys/module/snd_seq_midi_event/sections/.note.gnu.build-id
+/sys/module/crct10dif_generic/notes/.note.gnu.build-id
+/sys/module/crct10dif_generic/sections/.init.text
+/sys/module/crct10dif_generic/sections/.data
+/sys/module/crct10dif_generic/sections/.text
+/sys/module/crct10dif_generic/sections/.strtab
+/sys/module/crct10dif_generic/sections/.symtab
+/sys/module/crct10dif_generic/sections/.gnu.linkonce.this_module
+/sys/module/crct10dif_generic/sections/.note.gnu.build-id
+/sys/module/crct10dif_generic/sections/.exit.text
+/sys/module/ebtable_broute/notes/.note.gnu.build-id
+/sys/module/ebtable_broute/sections/.init.text
+/sys/module/ebtable_broute/sections/.data
+/sys/module/ebtable_broute/sections/.text
+/sys/module/ebtable_broute/sections/.rodata
+/sys/module/ebtable_broute/sections/.strtab
+/sys/module/ebtable_broute/sections/.symtab
+/sys/module/ebtable_broute/sections/.gnu.linkonce.this_module
+/sys/module/ebtable_broute/sections/.note.gnu.build-id
+/sys/module/ebtable_broute/sections/.exit.text
+/sys/module/bridge/notes/.note.gnu.build-id
+/sys/module/bridge/sections/.bss
+/sys/module/bridge/sections/.init.text
+/sys/module/bridge/sections/.smp_locks
+/sys/module/bridge/sections/.data
+/sys/module/bridge/sections/.text
+/sys/module/bridge/sections/.data.unlikely
+/sys/module/bridge/sections/.rodata
+/sys/module/bridge/sections/.strtab
+/sys/module/bridge/sections/.symtab
+/sys/module/bridge/sections/.text.unlikely
+/sys/module/bridge/sections/.gnu.linkonce.this_module
+/sys/module/bridge/sections/.rodata.str1.1
+/sys/module/bridge/sections/.rodata.str1.8
+/sys/module/bridge/sections/.note.gnu.build-id
+/sys/module/bridge/sections/.exit.text
+/sys/module/bridge/sections/.parainstructions
+/sys/module/bridge/sections/.data..read_mostly
+/sys/module/ebtable_nat/notes/.note.gnu.build-id
+/sys/module/ebtable_nat/sections/.init.text
+/sys/module/ebtable_nat/sections/.data
+/sys/module/ebtable_nat/sections/.text
+/sys/module/ebtable_nat/sections/.strtab
+/sys/module/ebtable_nat/sections/.symtab
+/sys/module/ebtable_nat/sections/.gnu.linkonce.this_module
+/sys/module/ebtable_nat/sections/.note.gnu.build-id
+/sys/module/ebtable_nat/sections/.exit.text
+/sys/module/ebtable_nat/sections/.data..read_mostly
+/sys/module/cryptd/notes/.note.gnu.build-id
+/sys/module/cryptd/sections/.bss
+/sys/module/cryptd/sections/.init.text
+/sys/module/cryptd/sections/.smp_locks
+/sys/module/cryptd/sections/.data
+/sys/module/cryptd/sections/.text
+/sys/module/cryptd/sections/.rodata
+/sys/module/cryptd/sections/.strtab
+/sys/module/cryptd/sections/.symtab
+/sys/module/cryptd/sections/.text.unlikely
+/sys/module/cryptd/sections/.gnu.linkonce.this_module
+/sys/module/cryptd/sections/.rodata.str1.1
+/sys/module/cryptd/sections/.rodata.str1.8
+/sys/module/cryptd/sections/.note.gnu.build-id
+/sys/module/cryptd/sections/.exit.text
+/sys/module/dm_log/notes/.note.gnu.build-id
+/sys/module/dm_log/sections/.bss
+/sys/module/dm_log/sections/.init.text
+/sys/module/dm_log/sections/.data
+/sys/module/dm_log/sections/.text
+/sys/module/dm_log/sections/.strtab
+/sys/module/dm_log/sections/.symtab
+/sys/module/dm_log/sections/.gnu.linkonce.this_module
+/sys/module/dm_log/sections/.rodata.str1.1
+/sys/module/dm_log/sections/.rodata.str1.8
+/sys/module/dm_log/sections/.note.gnu.build-id
+/sys/module/dm_log/sections/.exit.text
+/sys/module/dm_log/sections/.parainstructions
+/sys/module/dm_mod/notes/.note.gnu.build-id
+/sys/module/dm_mod/sections/.bss
+/sys/module/dm_mod/sections/.init.data
+/sys/module/dm_mod/sections/.init.text
+/sys/module/dm_mod/sections/.smp_locks
+/sys/module/dm_mod/sections/.data
+/sys/module/dm_mod/sections/.text
+/sys/module/dm_mod/sections/.data.unlikely
+/sys/module/dm_mod/sections/.rodata
+/sys/module/dm_mod/sections/.strtab
+/sys/module/dm_mod/sections/.symtab
+/sys/module/dm_mod/sections/.text.unlikely
+/sys/module/dm_mod/sections/.gnu.linkonce.this_module
+/sys/module/dm_mod/sections/.rodata.str1.1
+/sys/module/dm_mod/sections/.rodata.str1.8
+/sys/module/dm_mod/sections/.note.gnu.build-id
+/sys/module/dm_mod/sections/.exit.text
+/sys/module/dm_mod/sections/.parainstructions
+/sys/module/ebtable_filter/notes/.note.gnu.build-id
+/sys/module/ebtable_filter/sections/.init.text
+/sys/module/ebtable_filter/sections/.data
+/sys/module/ebtable_filter/sections/.text
+/sys/module/ebtable_filter/sections/.rodata
+/sys/module/ebtable_filter/sections/.strtab
+/sys/module/ebtable_filter/sections/.symtab
+/sys/module/ebtable_filter/sections/.gnu.linkonce.this_module
+/sys/module/ebtable_filter/sections/.note.gnu.build-id
+/sys/module/ebtable_filter/sections/.exit.text
+/sys/module/ebtable_filter/sections/.data..read_mostly
+/sys/module/dm_mirror/notes/.note.gnu.build-id
+/sys/module/dm_mirror/sections/.init.text
+/sys/module/dm_mirror/sections/.smp_locks
+/sys/module/dm_mirror/sections/.data
+/sys/module/dm_mirror/sections/.text
+/sys/module/dm_mirror/sections/.rodata
+/sys/module/dm_mirror/sections/.strtab
+/sys/module/dm_mirror/sections/.symtab
+/sys/module/dm_mirror/sections/.text.unlikely
+/sys/module/dm_mirror/sections/.gnu.linkonce.this_module
+/sys/module/dm_mirror/sections/.rodata.str1.1
+/sys/module/dm_mirror/sections/.rodata.str1.8
+/sys/module/dm_mirror/sections/.note.gnu.build-id
+/sys/module/dm_mirror/sections/.exit.text
+/sys/module/dm_mirror/sections/.parainstructions
+/sys/module/mptbase/notes/.note.gnu.build-id
+/sys/module/mptbase/sections/.bss
+/sys/module/mptbase/sections/.init.text
+/sys/module/mptbase/sections/.data
+/sys/module/mptbase/sections/.text
+/sys/module/mptbase/sections/.rodata
+/sys/module/mptbase/sections/.strtab
+/sys/module/mptbase/sections/.symtab
+/sys/module/mptbase/sections/.gnu.linkonce.this_module
+/sys/module/mptbase/sections/.rodata.str1.1
+/sys/module/mptbase/sections/.rodata.str1.8
+/sys/module/mptbase/sections/.note.gnu.build-id
+/sys/module/mptbase/sections/.exit.text
+/sys/module/mptbase/sections/.parainstructions
+/sys/module/ata_generic/notes/.note.gnu.build-id
+/sys/module/ata_generic/sections/.bss
+/sys/module/ata_generic/sections/.init.text
+/sys/module/ata_generic/sections/.data
+/sys/module/ata_generic/sections/.text
+/sys/module/ata_generic/sections/.rodata
+/sys/module/ata_generic/sections/.strtab
+/sys/module/ata_generic/sections/.symtab
+/sys/module/ata_generic/sections/.gnu.linkonce.this_module
+/sys/module/ata_generic/sections/.rodata.str1.1
+/sys/module/ata_generic/sections/.note.gnu.build-id
+/sys/module/ata_generic/sections/.exit.text
+/sys/module/soundcore/notes/.note.gnu.build-id
+/sys/module/soundcore/sections/.bss
+/sys/module/soundcore/sections/.init.text
+/sys/module/soundcore/sections/.data
+/sys/module/soundcore/sections/.text
+/sys/module/soundcore/sections/.rodata
+/sys/module/soundcore/sections/.strtab
+/sys/module/soundcore/sections/.symtab
+/sys/module/soundcore/sections/.gnu.linkonce.this_module
+/sys/module/soundcore/sections/.rodata.str1.1
+/sys/module/soundcore/sections/.rodata.str1.8
+/sys/module/soundcore/sections/.note.gnu.build-id
+/sys/module/soundcore/sections/.exit.text
+/sys/module/soundcore/sections/.parainstructions
+/sys/module/ip_set/notes/.note.gnu.build-id
+/sys/module/ip_set/sections/.bss
+/sys/module/ip_set/sections/.init.text
+/sys/module/ip_set/sections/.smp_locks
+/sys/module/ip_set/sections/.data
+/sys/module/ip_set/sections/.text
+/sys/module/ip_set/sections/.rodata
+/sys/module/ip_set/sections/.strtab
+/sys/module/ip_set/sections/.symtab
+/sys/module/ip_set/sections/.text.unlikely
+/sys/module/ip_set/sections/.gnu.linkonce.this_module
+/sys/module/ip_set/sections/.rodata.str1.1
+/sys/module/ip_set/sections/.rodata.str1.8
+/sys/module/ip_set/sections/.note.gnu.build-id
+/sys/module/ip_set/sections/.exit.text
+/sys/module/ip_set/sections/.data..read_mostly
+/sys/module/joydev/notes/.note.gnu.build-id
+/sys/module/joydev/sections/.init.text
+/sys/module/joydev/sections/.data
+/sys/module/joydev/sections/.text
+/sys/module/joydev/sections/.rodata
+/sys/module/joydev/sections/.strtab
+/sys/module/joydev/sections/.symtab
+/sys/module/joydev/sections/.gnu.linkonce.this_module
+/sys/module/joydev/sections/.rodata.str1.1
+/sys/module/joydev/sections/.rodata.str1.8
+/sys/module/joydev/sections/.note.gnu.build-id
+/sys/module/joydev/sections/.exit.text
+/sys/module/joydev/sections/.parainstructions
+/sys/module/vmw_vsock_vmci_transport/notes/.note.gnu.build-id
+/sys/module/vmw_vsock_vmci_transport/sections/.bss
+/sys/module/vmw_vsock_vmci_transport/sections/.init.text
+/sys/module/vmw_vsock_vmci_transport/sections/.smp_locks
+/sys/module/vmw_vsock_vmci_transport/sections/.data
+/sys/module/vmw_vsock_vmci_transport/sections/.text
+/sys/module/vmw_vsock_vmci_transport/sections/.rodata
+/sys/module/vmw_vsock_vmci_transport/sections/.strtab
+/sys/module/vmw_vsock_vmci_transport/sections/.symtab
+/sys/module/vmw_vsock_vmci_transport/sections/.altinstructions
+/sys/module/vmw_vsock_vmci_transport/sections/.gnu.linkonce.this_module
+/sys/module/vmw_vsock_vmci_transport/sections/.altinstr_replacement
+/sys/module/vmw_vsock_vmci_transport/sections/.rodata.str1.1
+/sys/module/vmw_vsock_vmci_transport/sections/.rodata.str1.8
+/sys/module/vmw_vsock_vmci_transport/sections/.note.gnu.build-id
+/sys/module/vmw_vsock_vmci_transport/sections/.exit.text
+/sys/module/vmw_vsock_vmci_transport/sections/.parainstructions
+/sys/module/libata/notes/.note.gnu.build-id
+/sys/module/libata/sections/.bss
+/sys/module/libata/sections/.init.data
+/sys/module/libata/sections/.init.text
+/sys/module/libata/sections/.smp_locks
+/sys/module/libata/sections/.data
+/sys/module/libata/sections/.text
+/sys/module/libata/sections/.init.rodata
+/sys/module/libata/sections/.ref.data
+/sys/module/libata/sections/.data.unlikely
+/sys/module/libata/sections/.rodata
+/sys/module/libata/sections/.strtab
+/sys/module/libata/sections/.symtab
+/sys/module/libata/sections/.text.unlikely
+/sys/module/libata/sections/.gnu.linkonce.this_module
+/sys/module/libata/sections/.rodata.str1.1
+/sys/module/libata/sections/.rodata.str1.8
+/sys/module/libata/sections/.note.gnu.build-id
+/sys/module/libata/sections/.exit.text
+/sys/module/libata/sections/.parainstructions
+/sys/module/nf_nat/notes/.note.gnu.build-id
+/sys/module/nf_nat/sections/.bss
+/sys/module/nf_nat/sections/.init.text
+/sys/module/nf_nat/sections/.smp_locks
+/sys/module/nf_nat/sections/.data
+/sys/module/nf_nat/sections/.text
+/sys/module/nf_nat/sections/.data.unlikely
+/sys/module/nf_nat/sections/.rodata
+/sys/module/nf_nat/sections/.strtab
+/sys/module/nf_nat/sections/.symtab
+/sys/module/nf_nat/sections/.gnu.linkonce.this_module
+/sys/module/nf_nat/sections/.rodata.str1.1
+/sys/module/nf_nat/sections/.rodata.str1.8
+/sys/module/nf_nat/sections/.note.gnu.build-id
+/sys/module/nf_nat/sections/.exit.text
+/sys/module/nf_nat/sections/.data..read_mostly
+/sys/module/mptspi/notes/.note.gnu.build-id
+/sys/module/mptspi/sections/.bss
+/sys/module/mptspi/sections/.init.text
+/sys/module/mptspi/sections/.data
+/sys/module/mptspi/sections/.text
+/sys/module/mptspi/sections/.rodata
+/sys/module/mptspi/sections/.strtab
+/sys/module/mptspi/sections/.symtab
+/sys/module/mptspi/sections/.gnu.linkonce.this_module
+/sys/module/mptspi/sections/.rodata.str1.1
+/sys/module/mptspi/sections/.rodata.str1.8
+/sys/module/mptspi/sections/.note.gnu.build-id
+/sys/module/mptspi/sections/.exit.text
+/sys/module/mptspi/sections/.parainstructions
+/sys/module/nf_defrag_ipv4/notes/.note.gnu.build-id
+/sys/module/nf_defrag_ipv4/sections/.init.text
+/sys/module/nf_defrag_ipv4/sections/.data
+/sys/module/nf_defrag_ipv4/sections/.text
+/sys/module/nf_defrag_ipv4/sections/.strtab
+/sys/module/nf_defrag_ipv4/sections/.symtab
+/sys/module/nf_defrag_ipv4/sections/.gnu.linkonce.this_module
+/sys/module/nf_defrag_ipv4/sections/.note.gnu.build-id
+/sys/module/nf_defrag_ipv4/sections/.exit.text
+/sys/module/nf_defrag_ipv6/notes/.note.gnu.build-id
+/sys/module/nf_defrag_ipv6/sections/.bss
+/sys/module/nf_defrag_ipv6/sections/.init.text
+/sys/module/nf_defrag_ipv6/sections/.smp_locks
+/sys/module/nf_defrag_ipv6/sections/.data
+/sys/module/nf_defrag_ipv6/sections/.text
+/sys/module/nf_defrag_ipv6/sections/.rodata
+/sys/module/nf_defrag_ipv6/sections/.strtab
+/sys/module/nf_defrag_ipv6/sections/.symtab
+/sys/module/nf_defrag_ipv6/sections/.gnu.linkonce.this_module
+/sys/module/nf_defrag_ipv6/sections/.rodata.str1.1
+/sys/module/nf_defrag_ipv6/sections/.rodata.str1.8
+/sys/module/nf_defrag_ipv6/sections/.note.gnu.build-id
+/sys/module/nf_defrag_ipv6/sections/.exit.text
+/sys/module/nf_defrag_ipv6/sections/.parainstructions
+/sys/module/pcspkr/notes/.note.gnu.build-id
+/sys/module/pcspkr/sections/.init.text
+/sys/module/pcspkr/sections/.data
+/sys/module/pcspkr/sections/.text
+/sys/module/pcspkr/sections/.rodata
+/sys/module/pcspkr/sections/.strtab
+/sys/module/pcspkr/sections/.symtab
+/sys/module/pcspkr/sections/.gnu.linkonce.this_module
+/sys/module/pcspkr/sections/.rodata.str1.1
+/sys/module/pcspkr/sections/.note.gnu.build-id
+/sys/module/pcspkr/sections/.exit.text
+/sys/module/snd_ens1371/notes/.note.gnu.build-id
+/sys/module/snd_ens1371/sections/.bss
+/sys/module/snd_ens1371/sections/.init.text
+/sys/module/snd_ens1371/sections/.data
+/sys/module/snd_ens1371/sections/.text
+/sys/module/snd_ens1371/sections/.rodata
+/sys/module/snd_ens1371/sections/.strtab
+/sys/module/snd_ens1371/sections/.symtab
+/sys/module/snd_ens1371/sections/.gnu.linkonce.this_module
+/sys/module/snd_ens1371/sections/.rodata.str1.1
+/sys/module/snd_ens1371/sections/.rodata.str1.8
+/sys/module/snd_ens1371/sections/.note.gnu.build-id
+/sys/module/snd_ens1371/sections/.exit.text
+/sys/module/snd_ens1371/sections/.parainstructions
+/sys/module/snd_seq_device/notes/.note.gnu.build-id
+/sys/module/snd_seq_device/sections/.bss
+/sys/module/snd_seq_device/sections/.init.text
+/sys/module/snd_seq_device/sections/.smp_locks
+/sys/module/snd_seq_device/sections/.data
+/sys/module/snd_seq_device/sections/.text
+/sys/module/snd_seq_device/sections/.strtab
+/sys/module/snd_seq_device/sections/.symtab
+/sys/module/snd_seq_device/sections/.gnu.linkonce.this_module
+/sys/module/snd_seq_device/sections/.rodata.str1.1
+/sys/module/snd_seq_device/sections/.note.gnu.build-id
+/sys/module/snd_seq_device/sections/.exit.text
+/sys/module/ip6table_security/notes/.note.gnu.build-id
+/sys/module/ip6table_security/sections/.init.text
+/sys/module/ip6table_security/sections/.data
+/sys/module/ip6table_security/sections/.text
+/sys/module/ip6table_security/sections/.rodata
+/sys/module/ip6table_security/sections/.strtab
+/sys/module/ip6table_security/sections/.symtab
+/sys/module/ip6table_security/sections/.gnu.linkonce.this_module
+/sys/module/ip6table_security/sections/.note.gnu.build-id
+/sys/module/ip6table_security/sections/.exit.text
+/sys/module/ip6table_security/sections/.data..read_mostly
+/sys/module/rfcomm/notes/.note.gnu.build-id
+/sys/module/rfcomm/sections/.bss
+/sys/module/rfcomm/sections/.init.text
+/sys/module/rfcomm/sections/.smp_locks
+/sys/module/rfcomm/sections/.data
+/sys/module/rfcomm/sections/.text
+/sys/module/rfcomm/sections/.data.unlikely
+/sys/module/rfcomm/sections/.rodata
+/sys/module/rfcomm/sections/.strtab
+/sys/module/rfcomm/sections/.symtab
+/sys/module/rfcomm/sections/.gnu.linkonce.this_module
+/sys/module/rfcomm/sections/.rodata.str1.1
+/sys/module/rfcomm/sections/.rodata.str1.8
+/sys/module/rfcomm/sections/.note.gnu.build-id
+/sys/module/rfcomm/sections/.exit.text
+/sys/module/rfcomm/sections/.parainstructions
+/sys/module/rfkill/notes/.note.gnu.build-id
+/sys/module/rfkill/sections/.bss
+/sys/module/rfkill/sections/.init.text
+/sys/module/rfkill/sections/.smp_locks
+/sys/module/rfkill/sections/.data
+/sys/module/rfkill/sections/.text
+/sys/module/rfkill/sections/.rodata
+/sys/module/rfkill/sections/.strtab
+/sys/module/rfkill/sections/.symtab
+/sys/module/rfkill/sections/.gnu.linkonce.this_module
+/sys/module/rfkill/sections/.rodata.str1.1
+/sys/module/rfkill/sections/.rodata.str1.8
+/sys/module/rfkill/sections/.note.gnu.build-id
+/sys/module/rfkill/sections/.exit.text
+/sys/module/rfkill/sections/.parainstructions
+/sys/module/sd_mod/notes/.note.gnu.build-id
+/sys/module/sd_mod/sections/.bss
+/sys/module/sd_mod/sections/.init.text
+/sys/module/sd_mod/sections/.smp_locks
+/sys/module/sd_mod/sections/.data
+/sys/module/sd_mod/sections/.text
+/sys/module/sd_mod/sections/.rodata
+/sys/module/sd_mod/sections/.strtab
+/sys/module/sd_mod/sections/.symtab
+/sys/module/sd_mod/sections/.gnu.linkonce.this_module
+/sys/module/sd_mod/sections/.rodata.str1.1
+/sys/module/sd_mod/sections/.rodata.str1.8
+/sys/module/sd_mod/sections/.note.gnu.build-id
+/sys/module/sd_mod/sections/.exit.text
+/sys/module/sd_mod/sections/.parainstructions
+/sys/module/nf_reject_ipv4/notes/.note.gnu.build-id
+/sys/module/nf_reject_ipv4/sections/.text
+/sys/module/nf_reject_ipv4/sections/.strtab
+/sys/module/nf_reject_ipv4/sections/.symtab
+/sys/module/nf_reject_ipv4/sections/.gnu.linkonce.this_module
+/sys/module/nf_reject_ipv4/sections/.note.gnu.build-id
+/sys/module/nf_reject_ipv6/notes/.note.gnu.build-id
+/sys/module/nf_reject_ipv6/sections/.text
+/sys/module/nf_reject_ipv6/sections/.rodata
+/sys/module/nf_reject_ipv6/sections/.strtab
+/sys/module/nf_reject_ipv6/sections/.symtab
+/sys/module/nf_reject_ipv6/sections/.gnu.linkonce.this_module
+/sys/module/nf_reject_ipv6/sections/.rodata.str1.1
+/sys/module/nf_reject_ipv6/sections/.rodata.str1.8
+/sys/module/nf_reject_ipv6/sections/.note.gnu.build-id
+/sys/module/tcp_lp/notes/.note.gnu.build-id
+/sys/module/tcp_lp/sections/.init.text
+/sys/module/tcp_lp/sections/.text
+/sys/module/tcp_lp/sections/.rodata
+/sys/module/tcp_lp/sections/.strtab
+/sys/module/tcp_lp/sections/.symtab
+/sys/module/tcp_lp/sections/.gnu.linkonce.this_module
+/sys/module/tcp_lp/sections/.rodata.str1.1
+/sys/module/tcp_lp/sections/.rodata.str1.8
+/sys/module/tcp_lp/sections/.note.gnu.build-id
+/sys/module/tcp_lp/sections/.exit.text
+/sys/module/tcp_lp/sections/.data..read_mostly
+/sys/module/sr_mod/notes/.note.gnu.build-id
+/sys/module/sr_mod/sections/.bss
+/sys/module/sr_mod/sections/.init.text
+/sys/module/sr_mod/sections/.smp_locks
+/sys/module/sr_mod/sections/.data
+/sys/module/sr_mod/sections/.text
+/sys/module/sr_mod/sections/.data.unlikely
+/sys/module/sr_mod/sections/.rodata
+/sys/module/sr_mod/sections/.strtab
+/sys/module/sr_mod/sections/.symtab
+/sys/module/sr_mod/sections/.gnu.linkonce.this_module
+/sys/module/sr_mod/sections/.rodata.str1.1
+/sys/module/sr_mod/sections/.rodata.str1.8
+/sys/module/sr_mod/sections/.note.gnu.build-id
+/sys/module/sr_mod/sections/.exit.text
+/sys/module/sr_mod/sections/.parainstructions
+/sys/module/sunrpc/notes/.note.gnu.build-id
+/sys/module/sunrpc/sections/.bss
+/sys/module/sunrpc/sections/.init.text
+/sys/module/sunrpc/sections/.smp_locks
+/sys/module/sunrpc/sections/.data
+/sys/module/sunrpc/sections/.text
+/sys/module/sunrpc/sections/.ref.data
+/sys/module/sunrpc/sections/.data.unlikely
+/sys/module/sunrpc/sections/.rodata
+/sys/module/sunrpc/sections/.strtab
+/sys/module/sunrpc/sections/.symtab
+/sys/module/sunrpc/sections/.text.unlikely
+/sys/module/sunrpc/sections/.altinstructions
+/sys/module/sunrpc/sections/.gnu.linkonce.this_module
+/sys/module/sunrpc/sections/.altinstr_replacement
+/sys/module/sunrpc/sections/.rodata.str1.1
+/sys/module/sunrpc/sections/.rodata.str1.8
+/sys/module/sunrpc/sections/.note.gnu.build-id
+/sys/module/sunrpc/sections/.fixup
+/sys/module/sunrpc/sections/.exit.text
+/sys/module/sunrpc/sections/.parainstructions
+/sys/module/sunrpc/sections/.data..read_mostly
+/sys/module/nf_nat_ipv4/notes/.note.gnu.build-id
+/sys/module/nf_nat_ipv4/sections/.bss
+/sys/module/nf_nat_ipv4/sections/.init.text
+/sys/module/nf_nat_ipv4/sections/.text
+/sys/module/nf_nat_ipv4/sections/.rodata
+/sys/module/nf_nat_ipv4/sections/.strtab
+/sys/module/nf_nat_ipv4/sections/.symtab
+/sys/module/nf_nat_ipv4/sections/.gnu.linkonce.this_module
+/sys/module/nf_nat_ipv4/sections/.rodata.str1.1
+/sys/module/nf_nat_ipv4/sections/.rodata.str1.8
+/sys/module/nf_nat_ipv4/sections/.note.gnu.build-id
+/sys/module/nf_nat_ipv4/sections/.exit.text
+/sys/module/nf_nat_ipv6/notes/.note.gnu.build-id
+/sys/module/nf_nat_ipv6/sections/.bss
+/sys/module/nf_nat_ipv6/sections/.init.text
+/sys/module/nf_nat_ipv6/sections/.text
+/sys/module/nf_nat_ipv6/sections/.rodata
+/sys/module/nf_nat_ipv6/sections/.strtab
+/sys/module/nf_nat_ipv6/sections/.symtab
+/sys/module/nf_nat_ipv6/sections/.gnu.linkonce.this_module
+/sys/module/nf_nat_ipv6/sections/.rodata.str1.1
+/sys/module/nf_nat_ipv6/sections/.rodata.str1.8
+/sys/module/nf_nat_ipv6/sections/.note.gnu.build-id
+/sys/module/nf_nat_ipv6/sections/.exit.text
+/sys/module/gf128mul/notes/.note.gnu.build-id
+/sys/module/gf128mul/sections/.text
+/sys/module/gf128mul/sections/.rodata
+/sys/module/gf128mul/sections/.strtab
+/sys/module/gf128mul/sections/.symtab
+/sys/module/gf128mul/sections/.gnu.linkonce.this_module
+/sys/module/gf128mul/sections/.note.gnu.build-id
+/sys/module/xt_conntrack/notes/.note.gnu.build-id
+/sys/module/xt_conntrack/sections/.init.text
+/sys/module/xt_conntrack/sections/.text
+/sys/module/xt_conntrack/sections/.strtab
+/sys/module/xt_conntrack/sections/.symtab
+/sys/module/xt_conntrack/sections/.gnu.linkonce.this_module
+/sys/module/xt_conntrack/sections/.rodata.str1.8
+/sys/module/xt_conntrack/sections/.note.gnu.build-id
+/sys/module/xt_conntrack/sections/.exit.text
+/sys/module/xt_conntrack/sections/.data..read_mostly
+/sys/module/mptscsih/notes/.note.gnu.build-id
+/sys/module/mptscsih/sections/.data
+/sys/module/mptscsih/sections/.text
+/sys/module/mptscsih/sections/.rodata
+/sys/module/mptscsih/sections/.strtab
+/sys/module/mptscsih/sections/.symtab
+/sys/module/mptscsih/sections/.text.unlikely
+/sys/module/mptscsih/sections/.gnu.linkonce.this_module
+/sys/module/mptscsih/sections/.rodata.str1.1
+/sys/module/mptscsih/sections/.rodata.str1.8
+/sys/module/mptscsih/sections/.note.gnu.build-id
+/sys/module/crc_t10dif/notes/.note.gnu.build-id
+/sys/module/crc_t10dif/sections/.bss
+/sys/module/crc_t10dif/sections/.init.text
+/sys/module/crc_t10dif/sections/.text
+/sys/module/crc_t10dif/sections/.strtab
+/sys/module/crc_t10dif/sections/.symtab
+/sys/module/crc_t10dif/sections/.gnu.linkonce.this_module
+/sys/module/crc_t10dif/sections/.rodata.str1.1
+/sys/module/crc_t10dif/sections/.note.gnu.build-id
+/sys/module/crc_t10dif/sections/.exit.text
+/sys/module/crc_t10dif/sections/.data..read_mostly
+/sys/module/vmwgfx/notes/.note.gnu.build-id
+/sys/module/vmwgfx/sections/.bss
+/sys/module/vmwgfx/sections/.init.text
+/sys/module/vmwgfx/sections/.smp_locks
+/sys/module/vmwgfx/sections/.data
+/sys/module/vmwgfx/sections/.text
+/sys/module/vmwgfx/sections/.data.unlikely
+/sys/module/vmwgfx/sections/.rodata
+/sys/module/vmwgfx/sections/.strtab
+/sys/module/vmwgfx/sections/.symtab
+/sys/module/vmwgfx/sections/.text.unlikely
+/sys/module/vmwgfx/sections/.gnu.linkonce.this_module
+/sys/module/vmwgfx/sections/.rodata.str1.1
+/sys/module/vmwgfx/sections/.rodata.str1.8
+/sys/module/vmwgfx/sections/.note.gnu.build-id
+/sys/module/vmwgfx/sections/.exit.text
+/sys/module/vmwgfx/sections/.parainstructions
+/sys/module/vmw_vmci/notes/.note.gnu.build-id
+/sys/module/vmw_vmci/sections/.bss
+/sys/module/vmw_vmci/sections/.init.text
+/sys/module/vmw_vmci/sections/.smp_locks
+/sys/module/vmw_vmci/sections/.data
+/sys/module/vmw_vmci/sections/.text
+/sys/module/vmw_vmci/sections/.data.unlikely
+/sys/module/vmw_vmci/sections/.rodata
+/sys/module/vmw_vmci/sections/.strtab
+/sys/module/vmw_vmci/sections/.symtab
+/sys/module/vmw_vmci/sections/.gnu.linkonce.this_module
+/sys/module/vmw_vmci/sections/.rodata.str1.1
+/sys/module/vmw_vmci/sections/.rodata.str1.8
+/sys/module/vmw_vmci/sections/.note.gnu.build-id
+/sys/module/vmw_vmci/sections/.exit.text
+/sys/module/vmw_vmci/sections/.parainstructions
+/sys/module/nf_nat_masquerade_ipv4/notes/.note.gnu.build-id
+/sys/module/nf_nat_masquerade_ipv4/sections/.bss
+/sys/module/nf_nat_masquerade_ipv4/sections/.data
+/sys/module/nf_nat_masquerade_ipv4/sections/.text
+/sys/module/nf_nat_masquerade_ipv4/sections/.strtab
+/sys/module/nf_nat_masquerade_ipv4/sections/.symtab
+/sys/module/nf_nat_masquerade_ipv4/sections/.gnu.linkonce.this_module
+/sys/module/nf_nat_masquerade_ipv4/sections/.rodata.str1.1
+/sys/module/nf_nat_masquerade_ipv4/sections/.note.gnu.build-id
+/sys/module/parport/notes/.note.gnu.build-id
+/sys/module/parport/sections/.bss
+/sys/module/parport/sections/.init.text
+/sys/module/parport/sections/.smp_locks
+/sys/module/parport/sections/.data
+/sys/module/parport/sections/.text
+/sys/module/parport/sections/.rodata
+/sys/module/parport/sections/.strtab
+/sys/module/parport/sections/.symtab
+/sys/module/parport/sections/.gnu.linkonce.this_module
+/sys/module/parport/sections/.rodata.str1.1
+/sys/module/parport/sections/.rodata.str1.8
+/sys/module/parport/sections/.note.gnu.build-id
+/sys/module/parport/sections/.exit.text
+/sys/module/parport/sections/.parainstructions
+/sys/module/ac97_bus/notes/.note.gnu.build-id
+/sys/module/ac97_bus/sections/.init.text
+/sys/module/ac97_bus/sections/.data
+/sys/module/ac97_bus/sections/.text
+/sys/module/ac97_bus/sections/.strtab
+/sys/module/ac97_bus/sections/.symtab
+/sys/module/ac97_bus/sections/.gnu.linkonce.this_module
+/sys/module/ac97_bus/sections/.rodata.str1.1
+/sys/module/ac97_bus/sections/.note.gnu.build-id
+/sys/module/ac97_bus/sections/.exit.text
+/sys/module/parport_pc/notes/.note.gnu.build-id
+/sys/module/parport_pc/sections/.bss
+/sys/module/parport_pc/sections/.init.data
+/sys/module/parport_pc/sections/.init.text
+/sys/module/parport_pc/sections/.data
+/sys/module/parport_pc/sections/.text
+/sys/module/parport_pc/sections/.rodata
+/sys/module/parport_pc/sections/.strtab
+/sys/module/parport_pc/sections/.symtab
+/sys/module/parport_pc/sections/.text.unlikely
+/sys/module/parport_pc/sections/.gnu.linkonce.this_module
+/sys/module/parport_pc/sections/.rodata.str1.1
+/sys/module/parport_pc/sections/.rodata.str1.8
+/sys/module/parport_pc/sections/.note.gnu.build-id
+/sys/module/parport_pc/sections/.exit.text
+/sys/module/parport_pc/sections/.parainstructions
+/sys/module/iptable_filter/notes/.note.gnu.build-id
+/sys/module/iptable_filter/sections/.init.text
+/sys/module/iptable_filter/sections/.data
+/sys/module/iptable_filter/sections/.text
+/sys/module/iptable_filter/sections/.rodata
+/sys/module/iptable_filter/sections/.strtab
+/sys/module/iptable_filter/sections/.symtab
+/sys/module/iptable_filter/sections/.gnu.linkonce.this_module
+/sys/module/iptable_filter/sections/.note.gnu.build-id
+/sys/module/iptable_filter/sections/.exit.text
+/sys/module/iptable_filter/sections/.data..read_mostly
+/sys/module/ip6table_nat/notes/.note.gnu.build-id
+/sys/module/ip6table_nat/sections/.init.text
+/sys/module/ip6table_nat/sections/.data
+/sys/module/ip6table_nat/sections/.text
+/sys/module/ip6table_nat/sections/.rodata
+/sys/module/ip6table_nat/sections/.strtab
+/sys/module/ip6table_nat/sections/.symtab
+/sys/module/ip6table_nat/sections/.gnu.linkonce.this_module
+/sys/module/ip6table_nat/sections/.note.gnu.build-id
+/sys/module/ip6table_nat/sections/.exit.text
+/sys/module/ip6table_nat/sections/.data..read_mostly
+/sys/module/ip6table_raw/notes/.note.gnu.build-id
+/sys/module/ip6table_raw/sections/.init.text
+/sys/module/ip6table_raw/sections/.data
+/sys/module/ip6table_raw/sections/.text
+/sys/module/ip6table_raw/sections/.rodata
+/sys/module/ip6table_raw/sections/.strtab
+/sys/module/ip6table_raw/sections/.symtab
+/sys/module/ip6table_raw/sections/.gnu.linkonce.this_module
+/sys/module/ip6table_raw/sections/.note.gnu.build-id
+/sys/module/ip6table_raw/sections/.exit.text
+/sys/module/ip6table_raw/sections/.data..read_mostly
+/sys/module/ata_piix/notes/.note.gnu.build-id
+/sys/module/ata_piix/sections/.bss
+/sys/module/ata_piix/sections/.init.text
+/sys/module/ata_piix/sections/.data
+/sys/module/ata_piix/sections/.text
+/sys/module/ata_piix/sections/.rodata
+/sys/module/ata_piix/sections/.strtab
+/sys/module/ata_piix/sections/.symtab
+/sys/module/ata_piix/sections/.gnu.linkonce.this_module
+/sys/module/ata_piix/sections/.rodata.str1.1
+/sys/module/ata_piix/sections/.rodata.str1.8
+/sys/module/ata_piix/sections/.note.gnu.build-id
+/sys/module/ata_piix/sections/.exit.text
+/sys/module/ebtables/notes/.note.gnu.build-id
+/sys/module/ebtables/sections/.init.text
+/sys/module/ebtables/sections/.data
+/sys/module/ebtables/sections/.text
+/sys/module/ebtables/sections/.rodata
+/sys/module/ebtables/sections/.strtab
+/sys/module/ebtables/sections/.symtab
+/sys/module/ebtables/sections/.gnu.linkonce.this_module
+/sys/module/ebtables/sections/.rodata.str1.1
+/sys/module/ebtables/sections/.rodata.str1.8
+/sys/module/ebtables/sections/.note.gnu.build-id
+/sys/module/ebtables/sections/.exit.text
+/sys/module/vmw_balloon/notes/.note.gnu.build-id
+/sys/module/vmw_balloon/sections/.bss
+/sys/module/vmw_balloon/sections/.init.text
+/sys/module/vmw_balloon/sections/.text
+/sys/module/vmw_balloon/sections/.data.unlikely
+/sys/module/vmw_balloon/sections/.rodata
+/sys/module/vmw_balloon/sections/.strtab
+/sys/module/vmw_balloon/sections/.symtab
+/sys/module/vmw_balloon/sections/.gnu.linkonce.this_module
+/sys/module/vmw_balloon/sections/.rodata.str1.1
+/sys/module/vmw_balloon/sections/.rodata.str1.8
+/sys/module/vmw_balloon/sections/.note.gnu.build-id
+/sys/module/vmw_balloon/sections/.exit.text
+/sys/module/glue_helper/notes/.note.gnu.build-id
+/sys/module/glue_helper/sections/.text
+/sys/module/glue_helper/sections/.data.unlikely
+/sys/module/glue_helper/sections/.strtab
+/sys/module/glue_helper/sections/.symtab
+/sys/module/glue_helper/sections/.gnu.linkonce.this_module
+/sys/module/glue_helper/sections/.rodata.str1.1
+/sys/module/glue_helper/sections/.note.gnu.build-id
+/sys/module/sysfillrect/notes/.note.gnu.build-id
+/sys/module/sysfillrect/sections/.text
+/sys/module/sysfillrect/sections/.rodata
+/sys/module/sysfillrect/sections/.strtab
+/sys/module/sysfillrect/sections/.symtab
+/sys/module/sysfillrect/sections/.gnu.linkonce.this_module
+/sys/module/sysfillrect/sections/.rodata.str1.1
+/sys/module/sysfillrect/sections/.rodata.str1.8
+/sys/module/sysfillrect/sections/.note.gnu.build-id
+/sys/module/bluetooth/notes/.note.gnu.build-id
+/sys/module/bluetooth/sections/.bss
+/sys/module/bluetooth/sections/.init.text
+/sys/module/bluetooth/sections/.smp_locks
+/sys/module/bluetooth/sections/.data
+/sys/module/bluetooth/sections/.text
+/sys/module/bluetooth/sections/.data.unlikely
+/sys/module/bluetooth/sections/.rodata
+/sys/module/bluetooth/sections/.strtab
+/sys/module/bluetooth/sections/.symtab
+/sys/module/bluetooth/sections/.text.unlikely
+/sys/module/bluetooth/sections/.altinstructions
+/sys/module/bluetooth/sections/.gnu.linkonce.this_module
+/sys/module/bluetooth/sections/.altinstr_replacement
+/sys/module/bluetooth/sections/.rodata.str1.1
+/sys/module/bluetooth/sections/.rodata.str1.8
+/sys/module/bluetooth/sections/.note.gnu.build-id
+/sys/module/bluetooth/sections/.exit.text
+/sys/module/bluetooth/sections/.parainstructions
+/sys/module/ipt_REJECT/notes/.note.gnu.build-id
+/sys/module/ipt_REJECT/sections/.init.text
+/sys/module/ipt_REJECT/sections/.text
+/sys/module/ipt_REJECT/sections/.rodata
+/sys/module/ipt_REJECT/sections/.strtab
+/sys/module/ipt_REJECT/sections/.symtab
+/sys/module/ipt_REJECT/sections/.gnu.linkonce.this_module
+/sys/module/ipt_REJECT/sections/.rodata.str1.1
+/sys/module/ipt_REJECT/sections/.rodata.str1.8
+/sys/module/ipt_REJECT/sections/.note.gnu.build-id
+/sys/module/ipt_REJECT/sections/.exit.text
+/sys/module/ipt_REJECT/sections/.data..read_mostly
+/sys/module/iptable_mangle/notes/.note.gnu.build-id
+/sys/module/iptable_mangle/sections/.init.text
+/sys/module/iptable_mangle/sections/.data
+/sys/module/iptable_mangle/sections/.text
+/sys/module/iptable_mangle/sections/.rodata
+/sys/module/iptable_mangle/sections/.strtab
+/sys/module/iptable_mangle/sections/.symtab
+/sys/module/iptable_mangle/sections/.gnu.linkonce.this_module
+/sys/module/iptable_mangle/sections/.note.gnu.build-id
+/sys/module/iptable_mangle/sections/.exit.text
+/sys/module/iptable_mangle/sections/.data..read_mostly
+/sys/module/nf_conntrack/notes/.note.gnu.build-id
+/sys/module/nf_conntrack/sections/.bss
+/sys/module/nf_conntrack/sections/.init.text
+/sys/module/nf_conntrack/sections/.smp_locks
+/sys/module/nf_conntrack/sections/.data
+/sys/module/nf_conntrack/sections/.text
+/sys/module/nf_conntrack/sections/.data.unlikely
+/sys/module/nf_conntrack/sections/.rodata
+/sys/module/nf_conntrack/sections/.strtab
+/sys/module/nf_conntrack/sections/.symtab
+/sys/module/nf_conntrack/sections/.text.unlikely
+/sys/module/nf_conntrack/sections/.altinstructions
+/sys/module/nf_conntrack/sections/.data..cacheline_aligned
+/sys/module/nf_conntrack/sections/.gnu.linkonce.this_module
+/sys/module/nf_conntrack/sections/.altinstr_replacement
+/sys/module/nf_conntrack/sections/.rodata.str1.1
+/sys/module/nf_conntrack/sections/.rodata.str1.8
+/sys/module/nf_conntrack/sections/.note.gnu.build-id
+/sys/module/nf_conntrack/sections/.exit.text
+/sys/module/nf_conntrack/sections/.parainstructions
+/sys/module/nf_conntrack/sections/.data..read_mostly
+/sys/module/ip6_tables/notes/.note.gnu.build-id
+/sys/module/ip6_tables/sections/.bss
+/sys/module/ip6_tables/sections/.init.text
+/sys/module/ip6_tables/sections/.data
+/sys/module/ip6_tables/sections/.text
+/sys/module/ip6_tables/sections/.rodata
+/sys/module/ip6_tables/sections/.strtab
+/sys/module/ip6_tables/sections/.symtab
+/sys/module/ip6_tables/sections/.altinstructions
+/sys/module/ip6_tables/sections/.gnu.linkonce.this_module
+/sys/module/ip6_tables/sections/.altinstr_replacement
+/sys/module/ip6_tables/sections/.rodata.str1.1
+/sys/module/ip6_tables/sections/.rodata.str1.8
+/sys/module/ip6_tables/sections/.note.gnu.build-id
+/sys/module/ip6_tables/sections/.exit.text
+/sys/module/ip6_tables/sections/.data..read_mostly
+/sys/module/btintel/notes/.note.gnu.build-id
+/sys/module/btintel/sections/.smp_locks
+/sys/module/btintel/sections/.data
+/sys/module/btintel/sections/.text
+/sys/module/btintel/sections/.data.unlikely
+/sys/module/btintel/sections/.rodata
+/sys/module/btintel/sections/.strtab
+/sys/module/btintel/sections/.symtab
+/sys/module/btintel/sections/.gnu.linkonce.this_module
+/sys/module/btintel/sections/.rodata.str1.1
+/sys/module/btintel/sections/.rodata.str1.8
+/sys/module/btintel/sections/.note.gnu.build-id
+/sys/module/iptable_nat/notes/.note.gnu.build-id
+/sys/module/iptable_nat/sections/.init.text
+/sys/module/iptable_nat/sections/.data
+/sys/module/iptable_nat/sections/.text
+/sys/module/iptable_nat/sections/.rodata
+/sys/module/iptable_nat/sections/.strtab
+/sys/module/iptable_nat/sections/.symtab
+/sys/module/iptable_nat/sections/.gnu.linkonce.this_module
+/sys/module/iptable_nat/sections/.note.gnu.build-id
+/sys/module/iptable_nat/sections/.exit.text
+/sys/module/iptable_nat/sections/.data..read_mostly
+/sys/module/iptable_raw/notes/.note.gnu.build-id
+/sys/module/iptable_raw/sections/.init.text
+/sys/module/iptable_raw/sections/.data
+/sys/module/iptable_raw/sections/.text
+/sys/module/iptable_raw/sections/.rodata
+/sys/module/iptable_raw/sections/.strtab
+/sys/module/iptable_raw/sections/.symtab
+/sys/module/iptable_raw/sections/.gnu.linkonce.this_module
+/sys/module/iptable_raw/sections/.note.gnu.build-id
+/sys/module/iptable_raw/sections/.exit.text
+/sys/module/iptable_raw/sections/.data..read_mostly
+/sys/module/ip6t_REJECT/notes/.note.gnu.build-id
+/sys/module/ip6t_REJECT/sections/.init.text
+/sys/module/ip6t_REJECT/sections/.text
+/sys/module/ip6t_REJECT/sections/.rodata
+/sys/module/ip6t_REJECT/sections/.strtab
+/sys/module/ip6t_REJECT/sections/.symtab
+/sys/module/ip6t_REJECT/sections/.gnu.linkonce.this_module
+/sys/module/ip6t_REJECT/sections/.rodata.str1.1
+/sys/module/ip6t_REJECT/sections/.rodata.str1.8
+/sys/module/ip6t_REJECT/sections/.note.gnu.build-id
+/sys/module/ip6t_REJECT/sections/.exit.text
+/sys/module/ip6t_REJECT/sections/.data..read_mostly
+/sys/module/libcrc32c/notes/.note.gnu.build-id
+/sys/module/libcrc32c/sections/.bss
+/sys/module/libcrc32c/sections/.init.text
+/sys/module/libcrc32c/sections/.text
+/sys/module/libcrc32c/sections/.strtab
+/sys/module/libcrc32c/sections/.symtab
+/sys/module/libcrc32c/sections/.gnu.linkonce.this_module
+/sys/module/libcrc32c/sections/.rodata.str1.1
+/sys/module/libcrc32c/sections/.note.gnu.build-id
+/sys/module/libcrc32c/sections/.exit.text
+/sys/module/snd_seq_midi/notes/.note.gnu.build-id
+/sys/module/snd_seq_midi/sections/.bss
+/sys/module/snd_seq_midi/sections/.init.text
+/sys/module/snd_seq_midi/sections/.data
+/sys/module/snd_seq_midi/sections/.text
+/sys/module/snd_seq_midi/sections/.rodata
+/sys/module/snd_seq_midi/sections/.strtab
+/sys/module/snd_seq_midi/sections/.symtab
+/sys/module/snd_seq_midi/sections/.gnu.linkonce.this_module
+/sys/module/snd_seq_midi/sections/.rodata.str1.1
+/sys/module/snd_seq_midi/sections/.rodata.str1.8
+/sys/module/snd_seq_midi/sections/.note.gnu.build-id
+/sys/module/snd_seq_midi/sections/.exit.text
+/sys/module/crc32_pclmul/notes/.note.gnu.build-id
+/sys/module/crc32_pclmul/sections/.init.text
+/sys/module/crc32_pclmul/sections/.data
+/sys/module/crc32_pclmul/sections/.text
+/sys/module/crc32_pclmul/sections/.data.unlikely
+/sys/module/crc32_pclmul/sections/.rodata
+/sys/module/crc32_pclmul/sections/.strtab
+/sys/module/crc32_pclmul/sections/.symtab
+/sys/module/crc32_pclmul/sections/.gnu.linkonce.this_module
+/sys/module/crc32_pclmul/sections/.rodata.str1.1
+/sys/module/crc32_pclmul/sections/.rodata.str1.8
+/sys/module/crc32_pclmul/sections/.note.gnu.build-id
+/sys/module/crc32_pclmul/sections/.exit.text
+/sys/module/nf_conntrack_ipv4/notes/.note.gnu.build-id
+/sys/module/nf_conntrack_ipv4/sections/.init.text
+/sys/module/nf_conntrack_ipv4/sections/.smp_locks
+/sys/module/nf_conntrack_ipv4/sections/.data
+/sys/module/nf_conntrack_ipv4/sections/.text
+/sys/module/nf_conntrack_ipv4/sections/.rodata
+/sys/module/nf_conntrack_ipv4/sections/.strtab
+/sys/module/nf_conntrack_ipv4/sections/.symtab
+/sys/module/nf_conntrack_ipv4/sections/.gnu.linkonce.this_module
+/sys/module/nf_conntrack_ipv4/sections/.rodata.str1.1
+/sys/module/nf_conntrack_ipv4/sections/.rodata.str1.8
+/sys/module/nf_conntrack_ipv4/sections/.note.gnu.build-id
+/sys/module/nf_conntrack_ipv4/sections/.exit.text
+/sys/module/nf_conntrack_ipv4/sections/.data..read_mostly
+/sys/module/nf_conntrack_ipv6/notes/.note.gnu.build-id
+/sys/module/nf_conntrack_ipv6/sections/.init.text
+/sys/module/nf_conntrack_ipv6/sections/.smp_locks
+/sys/module/nf_conntrack_ipv6/sections/.data
+/sys/module/nf_conntrack_ipv6/sections/.text
+/sys/module/nf_conntrack_ipv6/sections/.rodata
+/sys/module/nf_conntrack_ipv6/sections/.strtab
+/sys/module/nf_conntrack_ipv6/sections/.symtab
+/sys/module/nf_conntrack_ipv6/sections/.gnu.linkonce.this_module
+/sys/module/nf_conntrack_ipv6/sections/.rodata.str1.1
+/sys/module/nf_conntrack_ipv6/sections/.rodata.str1.8
+/sys/module/nf_conntrack_ipv6/sections/.note.gnu.build-id
+/sys/module/nf_conntrack_ipv6/sections/.exit.text
+/sys/module/nf_conntrack_ipv6/sections/.data..read_mostly
+/etc/selinux/targeted/.policy.sha512
+/etc/skel/.bash_logout
+/etc/skel/.bash_profile
+/etc/skel/.bashrc
+/etc/.pwd.lock
+/etc/.updated
+/etc/mail/.sendmail.cf.swp
+/root/.bash_logout
+/root/.bash_profile
+/root/.cshrc
+/root/.tcshrc
+/root/.cache/vmware/drag_and_drop/ZSFU5o/..result.txt
+/root/.ICEauthority
+/root/.local/share/tracker/data/.meta.isrunning
+/root/.local/share/flatpak/.changed
+/root/.esd_auth
+/root/.bash_history
+/root/.mozilla/firefox/lbusw5jo.default-default/.parentlock
+/root/.mozilla/firefox/lbusw5jo.default-default/storage/permanent/chrome/.metadata-v2
+/root/.bashrc
+/var/lib/rpm/.dbenv.lock
+/var/lib/rpm/.rpm.lock
+/var/lib/flatpak/.changed
+/var/lib/gdm/.ICEauthority
+/var/cache/yum/x86_64/7/.gpgkeyschecked.yum
+/var/spool/at/.SEQ
+/var/.updated
+/tmp/.X0-lock
+/usr/lib64/.libgcrypt.so.11.hmac
+/usr/lib64/.libhogweed.so.2.5.hmac
+/usr/lib64/.libnettle.so.4.7.hmac
+/usr/lib64/.libcrypto.so.1.0.2k.hmac
+/usr/lib64/.libssl.so.1.0.2k.hmac
+/usr/lib64/.libgnutls.so.28.43.3.hmac
+/usr/lib64/firefox/fonts/.uuid
+/usr/share/fonts/urw-base35/.uuid
+/usr/share/fonts/liberation/.uuid
+/usr/share/fonts/abattis-cantarell/.uuid
+/usr/share/fonts/dejavu/.uuid
+/usr/share/fonts/google-noto-emoji/.uuid
+/usr/share/fonts/.uuid
+/usr/share/fonts/lohit-gujarati/.uuid
+/usr/share/fonts/wqy-zenhei/.uuid
+/usr/share/fonts/lohit-oriya/.uuid
+/usr/share/fonts/paratype-pt-sans/.uuid
+/usr/share/fonts/lohit-bengali/.uuid
+/usr/share/fonts/khmeros/.uuid
+/usr/share/fonts/lohit-devanagari/.uuid
+/usr/share/fonts/madan/.uuid
+/usr/share/fonts/thai-scalable/.uuid
+/usr/share/fonts/overpass/.uuid
+/usr/share/fonts/paktype-naskh-basic/.uuid
+/usr/share/fonts/stix/.uuid
+/usr/share/fonts/lklug/.uuid
+/usr/share/fonts/gnu-free/.uuid
+/usr/share/fonts/lohit-nepali/.uuid
+/usr/share/fonts/lohit-kannada/.uuid
+/usr/share/fonts/nhn-nanum/.uuid
+/usr/share/fonts/sil-abyssinica/.uuid
+/usr/share/fonts/sil-nuosu/.uuid
+/usr/share/fonts/cjkuni-uming/.uuid
+/usr/share/fonts/lohit-tamil/.uuid
+/usr/share/fonts/smc/.uuid
+/usr/share/fonts/vlgothic/.uuid
+/usr/share/fonts/google-crosextra-caladea/.uuid
+/usr/share/fonts/lohit-telugu/.uuid
+/usr/share/fonts/wqy-microhei/.uuid
+/usr/share/fonts/lohit-marathi/.uuid
+/usr/share/fonts/lohit-malayalam/.uuid
+/usr/share/fonts/jomolhari/.uuid
+/usr/share/fonts/lohit-assamese/.uuid
+/usr/share/fonts/lohit-punjabi/.uuid
+/usr/share/fonts/open-sans/.uuid
+/usr/share/fonts/ucs-miscfixed/.uuid
+/usr/share/fonts/sil-padauk/.uuid
+/usr/share/fonts/google-crosextra-carlito/.uuid
+/usr/share/X11/fonts/Type1/.uuid
+/usr/share/man/man1/..1.gz
+/usr/share/man/man5/.k5login.5.gz
+/usr/share/man/man5/.k5identity.5.gz
+/usr/share/kde4/apps/kdm/themes/CentOS7/.colorlsCZ1
+/usr/src/kernels/3.10.0-1160.el7.x86_64/.config
+/home/yeji/.bash_logout
+/home/yeji/.bash_profile
+/home/yeji/.bashrc
+/home/yeji/.ICEauthority
+/home/yeji/.local/share/flatpak/.changed
+/home/yeji/.esd_auth
+/home/yeji/.bash_history
+/home/test/.bash_logout
+/home/test/.bash_profile
+/home/test/.bashrc
+/home/test/.viminfo
+/home/test/.bash_history
+/home/teste1/.bash_logout
+/home/teste1/.bash_profile
+/home/teste1/.bashrc
+/home/teste1/.ICEauthority
+/home/teste1/.local/share/flatpak/.changed
+/home/teste1/.esd_auth
+/home/teste1/.viminfo
+/home/teste1/.bash_history
+/home/teste/.bash_logout
+/home/teste/.bash_profile
+/home/teste/.bashrc
+
+#find / -type d -name ".*"
+/etc/skel/.mozilla
+/etc/.java
+/etc/.java/.systemPrefs
+/root/.cache
+/root/.config
+/root/.dbus
+/root/.local
+/root/.mozilla
+/var/lib/colord/.cache
+/var/lib/gdm/.pulse
+/var/lib/gdm/.dbus
+/var/lib/gdm/.config
+/var/lib/gdm/.local
+/var/lib/gdm/.cache
+/tmp/.font-unix
+/tmp/.ICE-unix
+/tmp/.Test-unix
+/tmp/.XIM-unix
+/tmp/.X11-unix
+/tmp/.esd-1002
+/tmp/.esd-0
+/home/yeji/.mozilla
+/home/yeji/.cache
+/home/yeji/.dbus
+/home/yeji/.config
+/home/yeji/.local
+/home/test/.mozilla
+/home/test/.cache
+/home/test/.config
+/home/teste1/.mozilla
+/home/teste1/.cache
+/home/teste1/.dbus
+/home/teste1/.config
+/home/teste1/.local
+/home/teste/.mozilla
+
+]]> </Data>
+<Comment>
+[양호] : 불필요하거나 의심스러운 숨겨진 파일 및 디렉터리를 삭제한 경우
+[취약] : 불필요하거나 의심스러운 숨겨진 파일 및 디렉터리를 방치한 경우
+</Comment>
+<Result>
+[인터뷰]
+</Result>
+</U-52>
+
+<U-53>
+<Name> ssh 원격접속 허용 </Name>
+<Security_Threat>
+원격 접속 시 Telnet, FTP 등은 암호화되지 않은 상태로 데이터를 전송하기
+때문에 아이디/패스워드 및 중요 정보가 외부로 유출될 위험성이 있음
+</Security_Threat>
+<Data> <![CDATA[
+#ps -ef | grep -i "ssh" | grep -v "grep"
+root       1073      1  0 Jul19 ?        00:00:00 /usr/sbin/sshd -D
+root       1917   1788  0 Jul19 ?        00:00:02 /usr/bin/ssh-agent /bin/sh -c exec -l /bin/bash -c "env GNOME_SHELL_SESSION_MODE=classic gnome-session --session gnome-classic"
+
+#netstat -al | grep -i -E 'telnet|ftp'
+
+]]> </Data>
+<Comment>
+[양호] : 원격 접속 시 SSH 프로토콜을 사용하는 경우
+[취약] : 원격 접속 시 Telnet, FTP 등 안전하지 않은 프로토콜을 사용하는 경우
+※ ssh, telnet이 동시에 설치되어 있는 경우 취약한 것으로 평가됨
+</Comment>
+<Result>
+[양호] : 원격 접속 시 SSH 프로토콜을 사용하는 경우
+</Result>
+</U-53>
+
+<U-54>
+<Name> ftp 서비스 확인 </Name>
+<Security_Threat>
+FTP 서비스는 통신구간이 평문으로 전송되어 계정정보(아이디, 패스워드) 및
+전송 데이터의 스니핑이 가능함
+</Security_Threat>
+<Data> <![CDATA[
+#ps -ef | grep -E "ftp|vsftpd|proftp" grep -v "grep"
+
+]]> </Data>
+<Comment>
+[양호] : FTP 서비스가 비활성화 되어 있는 경우
+[취약] : FTP 서비스가 활성화 되어 있는 경우
+</Comment>
+<Result>
+[양호] : FTP 서비스가 비활성화 되어 있는 경우
+</Result>
+</U-54>
+
+<U-55>
+<Name> ftp 계정 shell 제한 </Name>
+<Security_Threat>
+ 불필요한 기본 계정에 쉘(Shell)을 부여할 경우, 공격자에게 해당 계정이 노
+출되어 ftp 기본 계정으로 시스템 접근하여 공격이 가능해짐
+</Security_Threat>
+<Data> <![CDATA[
+#ps -ef | grep "ftp" |grep -v "grep"
+
+#cat /etc/passwd | grep "ftp"
+ftp:x:14:50:FTP User:/var/ftp:/sbin/nologin
+
+]]> </Data>
+<Comment>
+[양호] : ftp 계정에 /bin/false 쉘이 부여되어 있는 경우
+[취약] : ftp 계정에 /bin/false 쉘이 부여되어 있지 않은 경우
+</Comment>
+<Result>
+[N/A] : FTP 서비스를 사용하지 않은 경우
+</Result>
+</U-55>
+
+<U-56>
+<Name> ftpusers 파일 소유자 및 권한 설정 </Name>
+<Security_Threat>
+ftpusers 파일에 인가되지 않은 사용자를 등록하여 해당 계정을 이용, 불법
+적인 FTP 서비스에 접근이 가능함
+</Security_Threat>
+<Data> <![CDATA[
+#ps -ef | grep -i "ftp" | grep -v "grep"
+
+#ls -al /etc/ftpusers
+ls: cannot access /etc/ftpusers: No such file or directory
+
+# ls -al /etc/ftpd/ftpusers
+ls: cannot access /etc/ftpd/ftpusers: No such file or directory
+
+]]> </Data>
+<Comment>
+[양호] : ftpusers 파일의 소유자가 root이고, 권한이 640 이하인 경우
+[취약] : ftpusers 파일의 소유자가 root가 아니거나, 권한이 640 이하가 아닌 경우
+</Comment>
+<Result>
+[N/A] : FTP 서비스를 사용하지 않는 경우
+</Result>
+</U-56>
+
+<U-57>
+<Name> ftpusers 파일 설정(FTP 서비스 root 계정 접근제한) </Name>
+<Security_Threat>
+FTP 서비스는 아이디 및 패스워드가 암호화되지 않은 채로 전송되어 스니핑
+에 의해서 관리자 계정의 아이디 및 패스워드가 노출될 수 있음
+</Security_Threat>
+<Data> <![CDATA[
+#ps -ef | grep -i "FTP" | grep -v "grep
+
+#cat /etc/ftpusers
+cat: /etc/ftpusers: No such file or directory
+
+#cat /etc/ftpd/ftpusers
+
+]]> </Data>
+<Comment>
+[양호] : FTP 서비스가 비활성화 되어 있거나, 활성화 시 root 계정 접속을 차단한 경우
+[취약] : FTP 서비스가 활성화 되어 있고, root 계정 접속을 허용한 경우
+</Comment>
+<Result>
+[N/A] : FTP 서비스를 사용하지 않는 경우
+</Result>
+</U-57>
+
+<U-58>
+<Name> at 서비스 권한 설정 </Name>
+<Security_Threat>
+root 외 일반사용자에게도 at 명령어를 사용할 수 있도록 할 경우, 고의 또는
+실수로 불법적인 예약 파일 실행으로 시스템 피해를 일으킬 수 있음
+</Security_Threat>
+<Data> <![CDATA[
+#ls -al /usr/bin/at
+-rwsr-xr-x. 1 root root 53048 Oct 30  2018 /usr/bin/at
+
+#cat /etc/at.deny
+all
+
+#cat /etc/at.allow
+cat: /etc/at.allow: No such file or directory
+
+]]> </Data>
+<Comment>
+[양호] : at 명령어 일반사용자 금지 및 at 관련 파일 640 이하인 경우
+[취약] : at 명령어 일반사용자 사용가능하거나, at 관련 파일 640 이상인 경우
+</Comment>
+<Result>
+[양호] : at 명령어 일반사용자 금지 및 at 관련 파일 640 이하인 경우
+</Result>
+</U-58>
+
+<U-59>
+<Name> SNMP 서비스 구동 점검 </Name>
+<Security_Threat>
+SNMP 서비스로 인하여 시스템의 주요 정보 유출 및 정보의 불법수정이 발생할 수 있음
+</Security_Threat>
+<Data> <![CDATA[
+#ps -ef | grep -i "snmp" | grep -v "grep"
+
+]]> </Data>
+<Comment>
+[양호] : SNMP 서비스를 사용하지 않는 경우
+[취약] : SNMP 서비스를 사용하는 경우
+</Comment>
+<Result>
+[양호] : SNMP 서비스를 사용하지 않는 경우
+</Result>
+</U-59>
+
+<U-60>
+<Name> SNMP 서비스 Community String의 복잡성 설정 </Name>
+<Security_Threat>
+Community String은 Default로 public, private로 설정된 경우가 많으며, 이
+를 변경하지 않으면 이 String을 악용하여 환경설정 파일 열람 및 수정을 통
+한 공격, 간단한 정보수집에서부터 관리자 권한 획득 및 Dos공격까지 다양
+한 형태의 공격이 가능함
+</Security_Threat>
+<Data> <![CDATA[
+#ps -ef | grep -i "snmp" | grep -v "grep"
+
+#cat /etc/snmp/snmpd.conf
+cat: /etc/snmp/snmpd.conf: No such file or directory
+
+]]> </Data>
+<Comment>
+[양호] : SNMP Community 이름이 public, private 이 아닌 경우
+[취약] : SNMP Community 이름이 public, private 인 경우
+</Comment>
+<Result>
+[N/A] : SNMP 서비스를 사용하지 않는 경우
+</Result>
+</U-60>
+
+<U-61>
+<Name> 로그온 시 경고 메시지 제공 </Name>
+<Security_Threat>
+ 로그인 배너가 설정되지 않을 경우 배너에 서버 OS 버전 및 서비스 버전이
+공격자에게 노출될 수 있으며 공격자는 이러한 정보를 통하여 해당 OS 및
+서비스의 취약점을 이용하여 공격을 시도할 수 있음
+</Security_Threat>
+<Data> <![CDATA[
+#cat /etc/motd
+dfd
+#cat /etc/issue.net
+\S
+Kernel \r on an \m
+
+#/etc/ssh/sshd_config
+#	$OpenBSD: sshd_config,v 1.100 2016/08/15 12:32:04 naddy Exp $
+
+# This is the sshd server system-wide configuration file.  See
+# sshd_config(5) for more information.
+
+# This sshd was compiled with PATH=/usr/local/bin:/usr/bin
+
+# The strategy used for options in the default sshd_config shipped with
+# OpenSSH is to specify options with their default value where
+# possible, but leave them commented.  Uncommented options override the
+# default value.
+
+# If you want to change the port on a SELinux system, you have to tell
+# SELinux about this change.
+# semanage port -a -t ssh_port_t -p tcp #PORTNUMBER
+#
+#Port 22
+#AddressFamily any
+#ListenAddress 0.0.0.0
+#ListenAddress ::
+
+HostKey /etc/ssh/ssh_host_rsa_key
+#HostKey /etc/ssh/ssh_host_dsa_key
+HostKey /etc/ssh/ssh_host_ecdsa_key
+HostKey /etc/ssh/ssh_host_ed25519_key
+
+# Ciphers and keying
+#RekeyLimit default none
+
+# Logging
+#SyslogFacility AUTH
+SyslogFacility AUTHPRIV
+#LogLevel INFO
+
+# Authentication:
+
+#LoginGraceTime 2m
+#PermitRootLogin yes
+#StrictModes yes
+#MaxAuthTries 6
+#MaxSessions 10
+
+#PubkeyAuthentication yes
+
+# The default is to check both .ssh/authorized_keys and .ssh/authorized_keys2
+# but this is overridden so installations will only check .ssh/authorized_keys
+AuthorizedKeysFile	.ssh/authorized_keys
+
+#AuthorizedPrincipalsFile none
+
+#AuthorizedKeysCommand none
+#AuthorizedKeysCommandUser nobody
+
+# For this to work you will also need host keys in /etc/ssh/ssh_known_hosts
+#HostbasedAuthentication no
+# Change to yes if you don't trust ~/.ssh/known_hosts for
+# HostbasedAuthentication
+#IgnoreUserKnownHosts no
+# Don't read the user's ~/.rhosts and ~/.shosts files
+#IgnoreRhosts yes
+
+# To disable tunneled clear text passwords, change to no here!
+#PasswordAuthentication yes
+#PermitEmptyPasswords no
+PasswordAuthentication yes
+
+# Change to no to disable s/key passwords
+#ChallengeResponseAuthentication yes
+ChallengeResponseAuthentication no
+
+# Kerberos options
+#KerberosAuthentication no
+#KerberosOrLocalPasswd yes
+#KerberosTicketCleanup yes
+#KerberosGetAFSToken no
+#KerberosUseKuserok yes
+
+# GSSAPI options
+GSSAPIAuthentication yes
+GSSAPICleanupCredentials no
+#GSSAPIStrictAcceptorCheck yes
+#GSSAPIKeyExchange no
+#GSSAPIEnablek5users no
+
+# Set this to 'yes' to enable PAM authentication, account processing,
+# and session processing. If this is enabled, PAM authentication will
+# be allowed through the ChallengeResponseAuthentication and
+# PasswordAuthentication.  Depending on your PAM configuration,
+# PAM authentication via ChallengeResponseAuthentication may bypass
+# the setting of "PermitRootLogin without-password".
+# If you just want the PAM account and session checks to run without
+# PAM authentication, then enable this but set PasswordAuthentication
+# and ChallengeResponseAuthentication to 'no'.
+# WARNING: 'UsePAM no' is not supported in Red Hat Enterprise Linux and may cause several
+# problems.
+UsePAM yes
+
+#AllowAgentForwarding yes
+#AllowTcpForwarding yes
+#GatewayPorts no
+X11Forwarding yes
+#X11DisplayOffset 10
+#X11UseLocalhost yes
+#PermitTTY yes
+#PrintMotd yes
+#PrintLastLog yes
+#TCPKeepAlive yes
+#UseLogin no
+#UsePrivilegeSeparation sandbox
+#PermitUserEnvironment no
+#Compression delayed
+#ClientAliveInterval 0
+#ClientAliveCountMax 3
+#ShowPatchLevel no
+#UseDNS yes
+#PidFile /var/run/sshd.pid
+#MaxStartups 10:30:100
+#PermitTunnel no
+#ChrootDirectory none
+#VersionAddendum none
+
+# no default banner path
+#Banner none
+
+# Accept locale-related environment variables
+AcceptEnv LANG LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE LC_MONETARY LC_MESSAGES
+AcceptEnv LC_PAPER LC_NAME LC_ADDRESS LC_TELEPHONE LC_MEASUREMENT
+AcceptEnv LC_IDENTIFICATION LC_ALL LANGUAGE
+AcceptEnv XMODIFIERS
+
+# override default of no subsystems
+Subsystem	sftp	/usr/libexec/openssh/sftp-server
+
+# Example of overriding settings on a per-user basis
+#Match User anoncvs
+#	X11Forwarding no
+#	AllowTcpForwarding no
+#	PermitTTY no
+#	ForceCommand cvs server
+
+]]> </Data>
+<Comment>
+[양호] : 서버 및 Telnet, FTP, SMTP, DNS 서비스에 로그온 메시지가 설정되어 있는 경우
+[취약] : 서버 및 Telnet, FTP, SMTP, DNS 서비스에 로그온 메시지가 설정되어 있지 않은 경우
+</Comment>
+<Result>
+[수동점검>
+</Result>
+</U-61>
+
+<U-62>
+<Name> NFS 설정파일 접근권한 </Name>
+<Security_Threat>
+NFS 접근제어 설정파일에 대한 권한 관리가 이루어지지 않을 시 인가되지
+않은 사용자를 등록하고 파일시스템을 마운트하여 불법적인 변조를 시도할 수 있음
+</Security_Threat>
+<Data> <![CDATA[
+#ls -al /etc/exports
+-rw-r--r--. 1 root root 0 Jun  7  2013 /etc/exports
+
+]]> </Data>
+<Comment>
+[양호] : NFS 접근제어 설정파일의 소유자가 root 이고, 권한이 644 이하인 경우
+[취약] : NFS 접근제어 설정파일의 소유자가 root 가 아니거나, 권한이 644 이하가 아닌 경우
+</Comment>
+<Result>
+[양호] : NFS 접근제어 설정파일의 소유자가 root 이고, 권한이 644 이하인 경우
+</Result>
+</U-62>
+
+<U-63>
+<Name> expn, vrfy 명령어 제한 </Name>
+<Security_Threat>
+VRFY, EXPN 명령어를 통하여 특정 사용자 계정의 존재유무를 알 수 있고,
+사용자의 정보를 외부로 유출 할 수 있음
+</Security_Threat>
+<Data> <![CDATA[
+#ps -ef | grep -i "SMTP" | grep -v "grep"
+
+#cat /etc/mail/sendmail.cf | grep -v "# ^*" | grep -i "PrivacyOptions"
+O PrivacyOptions=authwarnings,novrfy,noexpn,restrictqrun
+
+]]> </Data>
+<Comment>
+[양호] : SMTP 서비스 미사용 또는, noexpn, novrfy 옵션이 설정되어 있는 경우
+[취약] : SMTP 서비스를 사용하고, noexpn, novrfy 옵션이 설정되어 있지 않는 경우
+</Comment>
+<Result>
+[N/A] : SMTP 서비스를 사용하지 않는 경우
+</Result>
+</U-63>
+
+<U-64>
+<Name> 정책에 따른 시스템 로깅 설정 </Name>
+<Security_Threat>
+로깅 설정이 되어 있지 않을 경우 원인 규명이 어려우며, 법적 대응을 위한
+충분한 증거로 사용할 수 없음
+</Security_Threat>
+<Data> <![CDATA[
+#cat /etc/rsyslog.conf
+# rsyslog configuration file
+
+# For more information see /usr/share/doc/rsyslog-*/rsyslog_conf.html
+# If you experience problems, see http://www.rsyslog.com/doc/troubleshoot.html
+
+#### MODULES ####
+
+# The imjournal module bellow is now used as a message source instead of imuxsock.
+$ModLoad imuxsock # provides support for local system logging (e.g. via logger command)
+$ModLoad imjournal # provides access to the systemd journal
+#$ModLoad imklog # reads kernel messages (the same are read from journald)
+#$ModLoad immark  # provides --MARK-- message capability
+
+# Provides UDP syslog reception
+#$ModLoad imudp
+#$UDPServerRun 514
+
+# Provides TCP syslog reception
+#$ModLoad imtcp
+#$InputTCPServerRun 514
+
+
+#### GLOBAL DIRECTIVES ####
+
+# Where to place auxiliary files
+$WorkDirectory /var/lib/rsyslog
+
+# Use default timestamp format
+$ActionFileDefaultTemplate RSYSLOG_TraditionalFileFormat
+
+# File syncing capability is disabled by default. This feature is usually not required,
+# not useful and an extreme performance hit
+#$ActionFileEnableSync on
+
+# Include all config files in /etc/rsyslog.d/
+$IncludeConfig /etc/rsyslog.d/*.conf
+
+# Turn off message reception via local log socket;
+# local messages are retrieved through imjournal now.
+$OmitLocalLogging on
+
+# File to store the position in the journal
+$IMJournalStateFile imjournal.state
+
+
+#### RULES ####
+
+# Log all kernel messages to the console.
+# Logging much else clutters up the screen.
+#kern.*                                                 /dev/console
+
+# Log anything (except mail) of level info or higher.
+# Don't log private authentication messages!
+*.info;mail.none;authpriv.none;cron.none                /var/log/messages
+
+# The authpriv file has restricted access.
+authpriv.*                                              /var/log/secure
+
+# Log all the mail messages in one place.
+mail.*                                                  -/var/log/maillog
+
+
+# Log cron stuff
+cron.*                                                  /var/log/cron
+
+# Everybody gets emergency messages
+*.emerg                                                 :omusrmsg:*
+
+# Save news errors of level crit and higher in a special file.
+uucp,news.crit                                          /var/log/spooler
+
+# Save boot messages also to boot.log
+local7.*                                                /var/log/boot.log
+
+
+# ### begin forwarding rule ###
+# The statement between the begin ... end define a SINGLE forwarding
+# rule. They belong together, do NOT split them. If you create multiple
+# forwarding rules, duplicate the whole block!
+# Remote Logging (we use TCP for reliable delivery)
+#
+# An on-disk queue is created for this action. If the remote host is
+# down, messages are spooled to disk and sent when it is up again.
+#$ActionQueueFileName fwdRule1 # unique name prefix for spool files
+#$ActionQueueMaxDiskSpace 1g   # 1gb space limit (use as much as possible)
+#$ActionQueueSaveOnShutdown on # save messages to disk on shutdown
+#$ActionQueueType LinkedList   # run asynchronously
+#$ActionResumeRetryCount -1    # infinite retries if host is down
+# remote host is: name/ip:port, e.g. 192.168.0.1:514, port optional
+#*.* @@remote-host:514
+# ### end of the forwarding rule ###
+
+]]> </Data>
+<Comment>
+[양호] : 로그 기록 정책이 정책에 따라 설정되어 수립되어 있으며 보안정책에 따
+라 로그를 남기고 있을 경우
+[취약] : 로그 기록 정책 미수립 또는, 정책에 따라 설정되어 있지 않거나 보안정
+책에 따라 로그를 남기고 있지 않을 경우
+</Comment>
+<Result>
+[양호] : 로그 기록 정책이 정책에 따라 설정되어 수립되어 있으며 보안정책에 따
+라 로그를 남기고 있을 경우
+</Result>
+</U-64>
+
+</Unix>

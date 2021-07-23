@@ -1,0 +1,2396 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?> 
+<Windows> 
+<W-1> 
+<Name> Administrator 계정 이름 변경 또는 보안성 강화 </Name> 
+<Security_Threat> 
+-일반적으로 관리자 계정으로 잘 알려진 Administrator를 변경하지 않은 경우 
+악의적인 사용자의 패스워드 추측 공격을 통해 사용 권한 상승의 위험이 있으며, 
+관리자를 유인하여 침입자의 액세스를 허용하는 악성코드를 실행할 우려가 있음 
+-윈도우즈 최상위 관리자 계정인 Administrator는 기본적으로 삭제하거나 잠글 수 없어 악의적인 사용자의 목표가 됨 
+</Security_Threat> 
+<Data> <![CDATA[ 
+#net user find "Administrator" 
+ 
+Administrator            DefaultAccount           Guest                    
+]]> </Data> 
+<Comment> 
+[양호] : Administrator Default 계정 이름을 변경하거나 강화된 비밀번호를 적용한 경우 
+[취약] : Administrator Default 계정 이름을 변경하지 않거나 단순 비밀번호를 적용한 경우 
+</Comment> 
+<Result> 
+[취약] Administrator Default 계정 이름이 변경되어 있지 않으므로 취약함 
+</Result> 
+</W-1> 
+ 
+<W-2> 
+<Name> Guest 계정 비활성화 여부 점검 </Name> 
+<Security_Threat> 
+-Guest 계정은 시스템에 임시로 액세스해야 하는 사용자용 계정으로 
+이 계정을 사용하여 권한 없는 사용자가 시스템에 익명으로 액세스할 수 있으므로 
+비인가자 접근, 정보 유출 등 보안 위험이 따를 수 있음 
+</Security_Threat> 
+<Data> <![CDATA[ 
+#net user guest | find "Account active" 
+ 
+Account active               No
+]]> </Data> 
+<Comment> 
+[양호] : Guest 계정이 비활성화 되어 있는 경우 
+[취약] : Guest 계정이 활성화 되어 있는 경우 
+</Comment> 
+<Result> 
+[양호] : Guest 계정이 비활성화 되어 있는 경우 
+</Result> 
+</W-2> 
+ 
+<W-3> 
+<Name> 불필요한 계정 제거 </Name> 
+<Security_Threat> 
+-관리되지 않은 불필요한 계정은 장기간 패스워드가 변경되지 않아 무작위 
+대입 공격(Brute Force Attack)이나 패스워드 추측 공격 (Password Guessing 
+Attack)의 가능성이 존재하며, 또한 이런 공격에 의해 계정 정보가 유출되어 
+도 유출 사실을 인지하기 어려움 
+</Security_Threat> 
+<Data> <![CDATA[ 
+#net user 
+ 
+
+User accounts for \\DESKTOP-DLJ4NEM
+
+-------------------------------------------------------------------------------
+Administrator            DefaultAccount           Guest                    
+kongji                   WDAGUtilityAccount       
+The command completed successfully.
+
+]]> </Data> 
+<Comment> 
+[양호] : 불필요한 계정이 존재하지 않는 경우 
+[취약] : 불필요한 계정이 존재하는 경우 
+1. 시작 명령어 입력 
+2. 사용자 계정에 대한 용도 확인(스크린샷과 계정에 대한 용도 요청) 
+</Comment> 
+<RESULT> 
+[인터뷰] 
+</RESULT> 
+</W-3> 
+ 
+<W-4> 
+<Name> 계정 잠금 임계값 설정 </Name> 
+<Security_Threat> 
+-공격자는 시스템의 계정 잠금 임계값이 설정되지 않은 경우 자동화된 방법 
+을 이용하여 모든 사용자 계정에 대해 암호조합 공격을 자유롭게 시도할 수 
+있으므로 사용자 계정 정보의 노출 위험이 있음 
+</Security_Threat> 
+<Data> <![CDATA[ 
+#net accounts | find /i "Lockout threshold" 
+ 
+Lockout threshold:                                    Never
+]]> </Data> 
+<Comment> 
+[양호] : 계정 잠금 임계값이 5 이하의 값으로 설정되어 있는 경우 
+[취약] : 계정 잠금 임계값이 6 이상의 값으로 설정되어 있는 경우 
+[취약] : 계정 잠금 임계값이 설정되어 있지 않은 경우 
+</Comment> 
+<Result> 
+[취약] : 계정 잠금 임계값이 설정되어 있지 않은 경우 
+</Result> 
+</W-4> 
+ 
+<W-5> 
+<Name> 해독 가능한 암호화를 사용하여 암호 저장 해제 </Name> 
+<Security_Threat> 
+-위 정책이 설정된 경우 OS에서 사용자 ID, PW를 입력받아 인증을 진행하는 
+응용프로그램 프로토콜 지원 시 OS 는 사용자의 PW 를 해독 가능한 방식 
+으로 암호를 저장하기 때문에, 노출된 계정에 대해 공격자가 암호 복호화 공 
+격으로 PW를 획득하여 네트워크 리소스에 접근할 수 있음 
+</Security_Threat> 
+<Data> <![CDATA[ 
+#secedit /EXPORT /CFG | find /i "ClearTextPassword" 
+ 
+ClearTextPassword = 0
+]]> </Data> 
+<Comment> 
+[양호] : “해독 가능한 암호화를 사용하여 암호 저장” 정책이 “사용 안 함” 으로 되어 있는 경우 
+[취약] : “해독 가능한 암호화를 사용하여 암호 저장” 정책이 “사용” 으로 되어 있는 경우 
+ClearTextPassword = 0 사용 안함 
+ClearTextPassword = 1 사용 
+</Comment> 
+<Result> 
+[양호] : “해독 가능한 암호화를 사용하여 암호 저장” 정책이 “사용 안 함” 으로 되어 있는 경우 
+</Result> 
+</W-5> 
+ 
+<W-6> 
+<Name> 관리자 그룹에 최소한의 사용자 포함 </Name> 
+<Security_Threat> 
+-Administrators와 같은 관리자 그룹에 속한 구성원은 컴퓨터 시스템에 대한 
+완전하고 제한 없는 액세스 권한을 가지므로, 사용자를 관리자 그룹에 포함 
+시킬 경우 비인가 사용자에 대한 과도한 관리 권한이 부여될 수 있음 
+</Security_Threat> 
+<Data> <![CDATA[ 
+#net localgroup Administrators 
+ 
+Alias name     Administrators
+Comment        컴퓨터 도메인에 모든 액세스 권한을 가진 관리자입니다.
+
+Members
+
+-------------------------------------------------------------------------------
+Administrator
+kongji
+The command completed successfully.
+
+]]> </Data> 
+<Comment> 
+[양호] : Administrators 그룹의 구성원을 1명 이하로 유지하거나, 불필요한 관리자 계정이 존재하지 않는 경우 
+[취약] : Administrators 그룹에 불필요한 관리자 계정이 존재하는 경우 
+</Comment> 
+<RESULT> 
+[인터뷰] 
+</RESULT> 
+</W-6> 
+ 
+<W-7> 
+<Name> 공유 권한 및 사용자 그룹 설정 </Name> 
+<Security_Threat> 
+-Everyone이 공유계정에 포함되어 있으면 익명 사용자의 접근이 가능하여 
+내부 정보 유출 및 악성코드의 감염 우려가 있음 
+</Security_Threat> 
+<Data> <![CDATA[ 
+#net share 
+ 
+
+Share name   Resource                        Remark
+
+-------------------------------------------------------------------------------
+C$           C:\                             기본 공유                             
+IPC$                                         원격 IPC                            
+ADMIN$       C:\Windows                      원격 관리                             
+shell_script C:\Users\kongj\Desktop\shell_script
+                                             
+The command completed successfully.
+
+]]> </Data> 
+<Comment> 
+[양호] : 일반 공유 디렉토리가 없거나 공유 디렉토리 접근 권한에 Everyone 권한이 없는 경우 
+[취약] : 일반 공유 디렉토리의 접근 권한에 Everyone 권한이 있는 경우 
+</Comment> 
+<Result> 
+[양호] : 일반 공유 디렉토리가 없거나 공유 디렉토리 접근 권한에 Everyone 권한이 없는 경우 
+</Result> 
+</W-7> 
+ 
+<W-8> 
+<Name> 하드디스크 기본 공유 제거 </Name> 
+<Security_Threat> 
+-Windows는 프로그램 및 서비스를 네트워크나 컴퓨터 환경에서 관리하기 위해 
+시스템 기본 공유 항목을 자동으로 생성함. 이를 제거하지 않으면 비인가자가 
+모든 시스템 자원에 접근할 수 있는 위험한 상황이 발생할 수 있으며 
+이러한 공유 기능의 경로를 이용하여 바이러스가 침투될 수 있음 
+</Security_Threat> 
+<Data> <![CDATA[ 
+#net share | findstr /v "IPC" | find "$" 
+ 
+C$           C:\                             기본 공유                             
+ADMIN$       C:\Windows                      원격 관리                             
+reg query "HKLM\SYSTEM\CurrentControlSet\Services\lanmanserver\parameters" /s | find /i "AutoShareServer" 
+ 
+ 
+#reg query "HKLM\SYSTEM\CurrentControlSet\Services\lanmanserver\parameters" /s | find /i "AutoShareWks" 
+ 
+]]> </Data> 
+<Comment> 
+[양호] : 레지스트리의 AutoShareServer (WinNT: AutoShareWks)가 0이며 기본 공유가 존재하지 않는 경우 
+[취약] : 레지스트리의AutoShareServer (WinNT: AutoShareWks)가 1이거나 기본 공유가 존재하는 경우 
+</Comment> 
+<Result> 
+[취약] : 기본 공유가 존재하는 경우 
+</Result> 
+</W-8> 
+ 
+<W-9> 
+<Name> 불필요한 서비스 제거 </Name> 
+<Security_Threat> 
+-시스템에 기본적으로 설치되는 불필요한 취약 서비스들이 제거되지 않은 경우 
+해당 서비스의 취약점으로 인한 공격이 가능하며, 네트워크 서비스의 경우 
+열린 포트를 통한 외부 침입의 가능성이 존재함 
+</Security_Threat> 
+<Data> <![CDATA[ 
+#net start | findstr "불필요한 서비스" 
+   Cryptographic Services
+   DHCP Client
+   Intel(R) PROSet/Wireless Zero Configuration Service
+]]> </Data> 
+<Comment> 
+[양호] : 일반적으로 불필요한 서비스가 중지되어 있는 경우 
+[취약] : 일반적으로 불필요한 서비스가 구동 중인 경우 
+</Comment> 
+<Result> 
+[취약] : 일반적으로 불필요한 서비스가 구동 중인 경우 
+</Result> 
+</W-9> 
+ 
+<W-10> 
+<Name> IIS 서비스 구동 점검 </Name> 
+<Security_Threat> 
+-IIS 서비스는 WEB, FTP 등의 서비스를 제공해주는 유용한 서비스이나 프로파일링, 
+서비스 거부, 불법적인 접근, 임의의 코드실행, 정보 공개, 바이러스, 웜, 
+트로이목마 등의 위협에 노출될 수 있어 서비스 불필요 시 삭제하여야 함 
+</Security_Threat> 
+<Data> <![CDATA[ 
+#net start | find "IIS" 
+ 
+]]> </Data> 
+<Comment> 
+[양호] : IIS 서비스가 필요하지 않아 이용하지 않는 경우 
+[취약] : IIS 서비스를 필요하지 않지만 사용하는 경우 
+</Comment> 
+<Result> 
+[양호] : IIS 서비스가 필요하지 않아 이용하지 않는 경우 
+</Result> 
+</W-10> 
+ 
+<W-11> 
+<Name> NetBIOS 바인딩 서비스 구동 점검 </Name> 
+<Security_Threat> 
+-인터넷에 직접 연결되어 있는 윈도우 시스템에서 NetBIOS TCP/IP 바인딩이 
+활성화 되어 있을 경우 공격자가 네트워크 공유자원을 사용할 우려 존재 
+</Security_Threat> 
+<Data> <![CDATA[ 
+#ipconfig /all | findstr /i "NetBIOS over Tcpip" | find /i "Enabled" 
+ 
+   NetBIOS over Tcpip. . . . . . . . : Enabled
+   NetBIOS over Tcpip. . . . . . . . : Enabled
+]]> </Data> 
+<Comment> 
+[양호] : TCP/IP와 NetBIOS 간의 바인딩이 제거 되어 있는 경우 
+[취약] : TCP/IP와 NetBIOS 간의 바인딩이 제거 되어있지 않은 경우 
+</Comment> 
+<Result> 
+[취약] : TCP/IP와 NetBIOS 간의 바인딩이 제거 되어있지 않은 경우 
+</Result> 
+</W-11> 
+ 
+<W-12> 
+<Name> FTP 서비스 구동 점검 </Name> 
+<Security_Threat> 
+-OS에서 제공하는 기본적인 FTP 서비스를 사용할 경우 계정과 패스워드가 
+암호화되지 않은 채로 전송 되어 Sniffer에 의한 계정 정보의 노출 위험 존재 
+</Security_Threat> 
+<Data> <![CDATA[ 
+#net start | find "FTP" 
+ 
+]]> </Data> 
+<Comment> 
+[양호] : FTP 서비스를 사용하지 않는 경우 또는 secure FTP 서비스를 사용하는 경우 
+[취약] : FTP 서비스를 사용하는 경우 
+</Comment> 
+<Result> 
+[양호] : FTP 서비스를 사용하지 않는 경우 또는 secure FTP 서비스를 사용하는 경우 
+</Result> 
+</W-12> 
+ 
+<W-13> 
+<Name> FTP 디렉토리 접근권한 설정 </Name> 
+<Security_Threat> 
+FTP 홈디렉토리에 과도한 권한(예. Everyone Full Control)이 부여된 경우 임의의 
+사용자가 쓰기, 수정이 가능하여 정보유출, 파일 위?변조 등의 위험 존재 
+</Security_Threat> 
+<Data> <![CDATA[ 
+#net start | find "FTP" 
+ 
+#icacls C:\Windows\..\inetpub\ftproot 
+ 
+Successfully processed 0 files; Failed processing 1 files
+]]> </Data> 
+<Comment> 
+[양호] : FTP 홈 디렉토리에 Everyone 권한이 없는 경우 
+[취약] : FTP 홈 디렉토리에 Everyone 권한이 있는 경우 
+[N/A] : FTP 서비스를 사용하지 않는 경우 
+</Comment> 
+<Result> 
+[N/A] : FTP 서비스를 사용 안하는 경우 
+</Result> 
+</W-13> 
+ 
+<W-14> 
+<Name> Anonymous FTP 금지 </Name> 
+<Security_Threat> 
+-FTP 익명 접속이 허용된 경우 핵심 기밀 자료나 내부 정보의 불법 유출 가능성이 존재함 
+</Security_Threat> 
+<Data> <![CDATA[ 
+#net start | find "FTP" 
+  
+#type anonymousAuthentication.config.txt | find /i "anonymousAuthentication enabled" 
+]]> </Data> 
+<Comment> 
+[양호] : FTP 서비스를 사용하지 않거나, “익명 연결 허용”이 체크되지 않은 경우 
+[취약] : FTP 서비스를 사용하거나, “익명 연결 허용”이 체크되어 있는 경우 
+[N/A] : FTP 서비스를 사용하지 않는 경우 
+</Comment> 
+<Result> 
+[양호] : FTP 서비스를 사용하지 않거나, “익명 연결 허용”이 체크되지 않은 경우 
+</Result> 
+</W-14> 
+ 
+<W-15> 
+<Name> FTP 접근 제어 설정 </Name> 
+<Security_Threat> 
+-FTP 프로토콜은 로그온에 지정된 자격 증명이나 데이터 자체가 암호화 되지 
+않고 모든 자격 증명을 일반 텍스트로 네트워크를 통해 전송되는 특성상 서버 
+클라이언트간 트래픽 스니핑을 통해 인증정보가 쉽게 노출되므로 접속  
+허용된 사용자 IP를 지정하여 접속자를 제한할 것을 권고 
+</Security_Threat> 
+<Data> <![CDATA[ 
+ 
+#applicationHost.txt | findstr "ipAddress" 
+ 
+]]> </Data> 
+<Comment> 
+[양호] : 특정 IP 주소에서만 FTP 서버에 접속하도록 접근제어 설정을 적용한 경우 
+[취약] : 특정 IP 주소에서만 FTP 서버에 접속하도록 접근제어 설정을 적용하지 않은 경우 
+※ 조치 시 마스터 속성과 모든 사이트에 적용함 
+[N/A] : FTP 서비스를 사용하지 않는 경우 
+</Comment> 
+<Result> 
+[취약] : 특정 IP 주소에서만 FTP 서버에 접속하도록 접근제어 설정을 적용하지 않은 경우 
+</Result> 
+</W-15> 
+ 
+<W-16> 
+<Name> DNS Zone Transfer 설정 </Name> 
+<Security_Threat> 
+-DNS Zone Transfer 차단 설정이 적용되지 않은 경우 DNS 서버에 저장되어 
+있는 도메인 정보를 승인된 DNS 서버가 아닌 외부로 유출 위험 존재 
+</Security_Threat> 
+<Data> <![CDATA[ 
+ 
+#reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\DNS Server\Zones" /s | findstr /i "SecureSecondaries" 
+]]> </Data> 
+<Comment> 
+[양호] : : 아래 기준에 해당될 경우 
+1. DNS 서비스를 사용 않는 경우 
+2. 영역 전송 허용을 하지 않는 경우 
+3. 특정 서버로만 설정이 되어 있는 경우 
+[취약] : 위 3개 기준 중 하나라도 해당 되지 않는 경우 
+DatabaseFile = zone 이름 
+SecureSecondaries = DNS Zone Transfer 영역전송 여부 
+SecureSecondaries = 0 요청하는 모든 secondary server(보조 서버)로 zone transfer 전송 
+SecureSecondaries = 1 zone에 대하여 권한이 있는 name server로만 전송 
+SecureSecondaries = 2 특정 서버로만 zone transfer 전송 
+SecureSecondaries = 3 zone transfer 전송하지 않음 
+SecureSecondaries 0,1이면 취약 2이면 양호 
+SecondaryServers = 영역전송할 서버 내역 
+</Comment> 
+<Result> 
+[양호] : DNS 서비스를 사용하지 않으므로 양호함 
+</Result> 
+</W-16> 
+ 
+<W-17> 
+<Name> 최신 서비스팩 적용 </Name> 
+<Security_Threat> 
+-보안 업데이트를 적용하지 않은 경우 시스템 및 응용프로그램의 취약성으로 
+인해 권한 상승, 원격 코드 실행, 보안 기능 우회 등의 문제를 일으킬 수 있음 
+</Security_Threat> 
+<Data> <![CDATA[ 
+#현재 Windows Version 
+ 
+
+Microsoft Windows [Version 10.0.16299.1087]
+]]> </Data> 
+제품별 수명주기 사이트(2020년 8월 기준) 
+Microsoft Windows Server 제품별 지원 
+https://support.microsoft.com/ko-kr/lifecycle/search 
+<Comment> 
+[양호] : 최신 서비스팩이 설치되어 있으며 적용 절차 및 방법이 수립된 경우 
+[취약] : 최신 서비스팩이 설치되지 않거나, 적용 절차 및 방법이 수립되지 않은 경우 
+</Comment> 
+<Result> 
+[양호] : 최신 서비스팩이 설치되어 있으며 적용 절차 및 방법이 수립된 경우 
+[취약] : 최신 서비스팩이 설치되지 않거나, 적용 절차 및 방법이 수립되지 않은 경우 
+</Result> 
+</W-17> 
+ 
+<W-18> 
+<Name> 최신 HOT FIX 적용 </Name> 
+<Security_Threat> 
+-최신 Hot Fix가 즉시 적용되지 않은 경우 알려진 취약성으로 인한 시스템 
+공격 가능성 존재 
+</Security_Threat> 
+<Data> <![CDATA[ 
+#HOT FIX
+ 
+
+Microsoft Windows [Version 10.0.16299.1087]
+
+Host Name:                 DESKTOP-DLJ4NEM
+OS Name:                   Microsoft Windows 10 Pro
+OS Version:                10.0.16299 N/A Build 16299
+OS Manufacturer:           Microsoft Corporation
+OS Configuration:          Standalone Workstation
+OS Build Type:             Multiprocessor Free
+Registered Owner:          Windows User
+Registered Organization:   
+Product ID:                00331-10000-00001-AA032
+Original Install Date:     2018-06-04, ?? 10:17:32
+System Boot Time:          2021-07-19, ?? 2:08:52
+System Manufacturer:       LG Electronics                  
+System Model:              15Z980-GA50ML
+System Type:               x64-based PC
+Processor(s):              1 Processor(s) Installed.
+                           [01]: Intel64 Family 6 Model 142 Stepping 10 GenuineIntel ~1600 Mhz
+BIOS Version:              Phoenix Technologies Ltd. K2ZC0257 X64, 2018-07-11
+Windows Directory:         C:\Windows
+System Directory:          C:\Windows\system32
+Boot Device:               \Device\HarddiskVolume1
+System Locale:             ko;Korean
+Input Locale:              ko;Korean
+Time Zone:                 (UTC+09:00) Seoul
+Total Physical Memory:     16,217 MB
+Available Physical Memory: 8,127 MB
+Virtual Memory: Max Size:  19,161 MB
+Virtual Memory: Available: 4,774 MB
+Virtual Memory: In Use:    14,387 MB
+Page File Location(s):     C:\pagefile.sys
+Domain:                    WORKGROUP
+Logon Server:              \\DESKTOP-DLJ4NEM
+Hotfix(s):                 8 Hotfix(s) Installed.
+                           [01]: KB4132650
+                           [02]: KB4134661
+                           [03]: KB4295110
+                           [04]: KB4346085
+                           [05]: KB4485448
+                           [06]: KB4486153
+                           [07]: KB4486168
+                           [08]: KB4493441
+Network Card(s):           4 NIC(s) Installed.
+                           [01]: Intel(R) Dual Band Wireless-AC 8265
+                                 Connection Name: Wi-Fi
+                                 DHCP Enabled:    Yes
+                                 DHCP Server:     192.168.35.1
+                                 IP address(es)
+                                 [01]: 192.168.35.161
+                                 [02]: fe80::b0f2:f7c0:6e6e:c408
+                           [02]: Bluetooth Device (Personal Area Network)
+                                 Connection Name: Bluetooth ???? ??
+                                 Status:          Media disconnected
+                           [03]: VMware Virtual Ethernet Adapter for VMnet1
+                                 Connection Name: VMware Network Adapter VMnet1
+                                 DHCP Enabled:    Yes
+                                 DHCP Server:     192.168.91.254
+                                 IP address(es)
+                                 [01]: 192.168.91.1
+                                 [02]: fe80::3d0c:c7ff:3463:91bc
+                           [04]: VMware Virtual Ethernet Adapter for VMnet8
+                                 Connection Name: VMware Network Adapter VMnet8
+                                 DHCP Enabled:    Yes
+                                 DHCP Server:     192.168.18.254
+                                 IP address(es)
+                                 [01]: 192.168.18.1
+                                 [02]: fe80::b8f7:f19f:ea5f:7f04
+Hyper-V Requirements:      VM Monitor Mode Extensions: Yes
+                           Virtualization Enabled In Firmware: Yes
+                           Second Level Address Translation: Yes
+                           Data Execution Prevention Available: Yes
+HotFixID   InstalledOn  
+KB4132650  6/3/2018     
+KB4134661  4/2/2021     
+KB4295110  4/2/2021     
+KB4346085  4/2/2021     
+KB4485448  4/2/2021     
+KB4486153  4/2/2021     
+KB4486168  4/5/2021     
+KB4493441  4/2/2021     
+]]> </Data> 
+<Comment> 
+[양호] : 최신 Hotfix가 있는지 주기적으로 모니터링하고 반영하거나, PMS (PatchManagement System) Agent가 설치되어 자동패치배포가 적용된 경우 
+[취약] : 최신 Hotfix가 있는지 주기적으로 모니터 절차가 없거나, 최신 Hotfix를 반영하지 않은 경우, 또한 PMS(Patch Management System) Agent가 설치되어 있지 않거나, 설치되어 있으나 자동패치배포가 적용되지 않은 경우 
+</Comment> 
+<Result> 
+[양호] : 최신 Hotfix가 있는지 주기적으로 모니터링하고 반영하거나, PMS (PatchManagement System) Agent가 설치되어 자동패치배포가 적용된 경우 
+[취약] : 최신 Hotfix가 있는지 주기적으로 모니터 절차가 없거나, 최신 Hotfix를 반영하지 않은 경우, 또한 PMS(Patch Management System) Agent가 설치되어 있지 않거나, 설치되어 있으나 자동패치배포가 적용되지 않은 경우 
+</Result> 
+</W-18> 
+ 
+<W-19> 
+<Name> 백신 프로그램 업데이트 </Name> 
+<Security_Threat> 
+- 백신이 지속적, 주기적으로 업데이트 되지 않은 경우 계속되는 신종 바이러스의 
+출현으로 인한 시스템 공격의 우려가 존재 
+</Security_Threat> 
+<Data> <![CDATA[ 
+#백신 프로그램 업데이트 
+
+productState             : 397568
+
+
+ 
+]]> </Data> 
+<Comment> 
+[양호] : 바이러스 백신 프로그램의 최신 엔진 업데이트가 설치되어 있거나, 망 격리 
+환경의 경우 백신 업데이트를 위한 절차 및 적용 방법이 수립된 경우 
+[취약] : 바이러스 백신 프로그램의 최신 엔진 업데이트가 설치되어 있지 않거나, 
+망 격리 환경의 경우 백신 업데이트를 위한 절차 및 적용 방법이 수립되지 않은 경우 
+</Comment> 
+<Result> 
+[취약] : 바이러스 백신 프로그램의 최신 엔진 업데이트가 설치되어 있지 않거나, 
+망 격리 환경의 경우 백신 업데이트를 위한 절차 및 적용 방법이 수립되지 않은 경우 
+</Result> 
+</W-19> 
+ 
+<W-20> 
+<Name> 로그의 정기적 검토 및 보고 </Name> 
+<Security_Threat> 
+-로그의 검토 및 보고 절차가 없는 경우 외부 침입 시도에 대한 식별이 누락 
+될 수 있고, 침입 시도가 의심되는 사례 발견 시 관련 자료를 분석하여 해당 
+장비에 대한 접근을 차단하는 등의 추가 조치가 어려움 
+</Security_Threat> 
+<Data> <![CDATA[ 
+ 
+]]> </Data> 
+<Comment> 
+[양호] : 접속기록 등의 보안 로그, 응용 프로그램 및 시스템 로그 기록에 대해 정기적으로 검토, 분석, 리포트 작성 및 보고 등의 조치가 이루어지는 경우 
+[취약] : 위 로그 기록에 대해 정기적으로 검토, 분석, 리포트 작성 및 보고 등의 조치가 이루어 지지 않는 경우 
+</Comment> 
+<Result> 
+[인터뷰] 
+</Result> 
+</W-20> 
+ 
+<W-21> 
+<Name> 원격으로 액세스 할 수 있는 레지스트리 경로 </Name> 
+<Security_Threat> 
+-원격 레지스트리 서비스는 액세스에 대한 인증이 취약하여 관리자 계정 외 
+다른 계정들에게도 원격 레지스트리 액세스를 허용할 우려가 있으며 
+레지스트리에 대한 권한설정이 잘못되어 있는 경우 원격에서 레지스트리를 통해 
+임의의 파일을 실행 할 우려가 있음 
+-레지스트리 서비스의 장애는 전체 시스템에 영향을 줄 수 있어 서비스거부공격(DoS) 공격에 이용될 수 있음 
+</Security_Threat> 
+<Data> <![CDATA[ 
+#reg query "Start"  
+ 
+
+HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\RemoteRegistry
+    Start    REG_DWORD    0x4
+
+]]> </Data> 
+<Comment> 
+[양호] : Remote Registry Service가 중지되어 있는 경우 
+[취약] : Remote Registry Service가 사용 중인 경우 
+Start    REG_DWORD    0x2 = 자동 
+Start    REG_DWORD    0x3 = 수동 
+Start    REG_DWORD    0x4 = 사용 안함 
+</Comment> 
+<Result> 
+[양호] : Remote Registry Service가 중지되어 있는 경우 
+</Result> 
+</W-21> 
+ 
+<W-22> 
+<Name> 백신 프로그램 설치 </Name> 
+<Security_Threat> 
+백신 프로그램이 설치되지 않은 경우 웜, 트로이목마 등의 악성 바이러스로 
+인한 시스템 피해 위험이 있음 
+</Security_Threat> 
+<Data> <![CDATA[ 
+#설치된 백신 프로그램 리스트 
+ 
+Windows Defender
+]]> </Data> 
+<Comment> 
+[양호] : 바이러스 백신 프로그램이 설치되어 있는 경우 
+[취약] : 바이러스 백신 프로그램이 설치되어 있지 않은 경우 
+</Comment> 
+<Result> 
+[양호] : 바이러스 백신 프로그램의 최신 엔진 업데이트가 설치되어 있거나, 망 격리 
+환경의 경우 백신 업데이트를 위한 절차 및 적용 방법이 수립된 경우 
+</Result> 
+</W-22> 
+ 
+<W-23> 
+<Name> SAM 파일 접근 통제 설정 </Name> 
+<Security_Threat> 
+-SAM 파일이 노출될 경우 패스워드 공격 시도로 인해 계정 및 패스워드 데이터베이스 정보가 탈취될 우려 존재 
+</Security_Threat> 
+<Data> <![CDATA[ 
+#net localgroup Administrators 
+ 
+Alias name     Administrators
+Comment        컴퓨터 도메인에 모든 액세스 권한을 가진 관리자입니다.
+
+Members
+
+-------------------------------------------------------------------------------
+Administrator
+kongji
+The command completed successfully.
+
+#icacls C:\Windows\system32\config\SAM 
+ 
+
+Successfully processed 1 files; Failed processing 0 files
+]]> </Data> 
+<Comment> 
+[양호] : SAM 파일 접근권한에 Administrator, System 그룹만 모든 권한으로 
+설정되어 있는 경우 
+[취약] : SAM 파일 접근권한에 Administrator, System 그룹 외 다른 그룹에 권한이 
+설정되어 있는 경우 
+</Comment> 
+<Result> 
+[양호] : SAM 파일 접근권한에 Administrator, System 그룹만 모든 권한으로 
+설정되어 있는 경우 
+</Result> 
+</W-23> 
+ 
+<W-24> 
+<Name> 화면보호기 설정 </Name> 
+<Security_Threat> 
+-화면보호기 설정을 하지 않은 경우 사용자가 자리를 비운 사이에 임의의 
+사용자가 해당 시스템에 접근하여 중요 정보를 유출 하거나, 악의적인 행위를 
+통해 시스템 운영에 악영향을 미칠 수 있음 
+</Security_Threat> 
+<Data> <![CDATA[ 
+#reg query "HKCU\Control Panel\Desktop" /s | findstr /i "ScreenSave SCRNSAVE" 
+ 
+    ScreenSaveActive    REG_SZ    1
+    ScreenSaveTimeOut    REG_SZ    600
+    ScreenSaverIsSecure    REG_SZ    0
+    SCRNSAVE.EXE    REG_SZ    C:\Windows\system32\Ribbons.scr
+#reg query "HKCU\Control Panel\Desktop" /s | find /i "SCRNSAVE.EXE" 
+    SCRNSAVE.EXE    REG_SZ    C:\Windows\system32\Ribbons.scr
+ 
+]]> </Data> 
+<Comment> 
+[양호] : 화면 보호기를 설정하고 대기 시간이 10분 이하의 값으로 설정되어 
+있으며, 화면 보호기 해제를 위한 암호를 사용하는 경우 
+[취약] : 화면 보호기가 설정되지 않았거나 암호를 사용하지 않은 경우 또는, 화면 
+보호기 대기 시간이 10분을 초과한 값으로 설정되어 있는 경우 
+ScreenSaveActive = 1(화면 보호기 작동 유무), 양호 
+ScreenSaverIsSecure = 1(다시 시작할 때 로그온 화면 표시), 양호 
+ScreenSaveTimeOut = 600 이하(대기 시간, 단위 1초), 양호 
+화면 보호기 설정이 한번도 적용되지 않은 경우, 레지스트리 값이 존재하지 않으므로 취약 
+ScreenSaveActive 값이 1이더라도 SCRNSAVE.EXE 값이 없을 경우, 
+화면 보호기 설정이 적용되어 있지 않으므로 취약 
+</Comment> 
+<Result> 
+[취약] : 화면 보호기가 설정되지 않았거나 암호를 사용하지 않은 경우 또는, 화면 
+보호기 대기 시간이 10분을 초과한 값으로 설정되어 있는 경우 
+</Result> 
+</W-24> 
+ 
+<W-25> 
+<Name> 로그온 하지 않고 시스템 종료 허용 해제 </Name> 
+<Security_Threat> 
+-로그온 창에 “시스템 종료” 버튼이 활성화되어 있으면 로그인을 하지 않고도 
+불법적인 시스템 종료가 가능하여 정상적인 서비스 운영에 영향을 줌 
+</Security_Threat> 
+<Data> <![CDATA[ 
+#reg query "shutdownwithoutlogon" 
+
+HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\System
+    shutdownwithoutlogon    REG_DWORD    0x0
+
+]]> </Data> 
+<Comment> 
+[양호] : “로그온 하지 않고 시스템 종료 허용”이 “사용 안 함”으로 설정되어 있는경우 
+[취약] : “로그온 하지 않고 시스템 종료 허용”이 “사용”으로 설정되어 있는 경우, 0x1 
+shutdownwithoutlogon 0x0 = 사용 안함 
+shutdownwithoutlogon 0x1 = 사용 
+</Comment> 
+<Result> 
+[양호] : “로그온 하지 않고 시스템 종료 허용”이 “사용 안 함”으로 설정되어 있는경우 
+</Result> 
+</W-25> 
+ 
+<W-26> 
+<Name> 원격 시스템에서 강제로 시스템 종료 </Name> 
+<Security_Threat> 
+-원격 시스템 강제 종료 설정이 부적절한 경우 서비스 거부 공격 등에 악용 
+될 수 있음 
+</Security_Threat> 
+<Data> <![CDATA[ 
+#secedit /EXPORT /CFG test.txt | find "SeRemoteShutdownPrivilege = *S-1-5-32-544" 
+SeRemoteShutdownPrivilege = *S-1-5-32-544
+ 
+]]> </Data> 
+<Comment> 
+[양호] : “원격 시스템에서 강제로 시스템 종료” 정책에 “Administrators”만 존재 
+하는 경우 
+[취약] : “원격 시스템에서 강제로 시스템 종료” 정책에 “Administrators” 외 다른 
+계정 및 그룹이 존재하는 경우 
+echo * S-1-5-32-544: Administrators 그룹 
+</Comment> 
+<Result> 
+[양호] : “원격 시스템에서 강제로 시스템 종료” 정책에 “Administrators”만 존재 
+하는 경우 
+</Result> 
+</W-26> 
+ 
+<W-27> 
+<Name> 보안 감사를 로그할 수 없는 경우 즉시 시스템 종료 해제 </Name> 
+<Security_Threat> 
+-해당 정책이 활성화 되어 있는 경우 악의적인 목적으로 시스템 종료를 유발 
+하여 서비스 거부 공격에 악용될 수 있으며, 비정상적인 시스템 종료로 인하여 
+시스템 및 데이터에 손상을 입힐 수 있음 
+</Security_Threat> 
+<Data> <![CDATA[ 
+#reg query "crashonauditfail" 
+ 
+
+HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Lsa
+    crashonauditfail    REG_DWORD    0x0
+
+]]> </Data> 
+<Comment> 
+[양호] : “보안 감사를 로그할 수 없는 경우 즉시 시스템 종료” 정책이 “사용 안함”으로 되어 있는 경우 
+[취약] : “보안 감사를 로그할 수 없는 경우 즉시 시스템 종료” 정책이 “사용”으로 되어 있는 경우 
+crashonauditfail 0x0 = 사용 안함 
+crashonauditfail 0x1 = 사용 
+</Comment> 
+<Result> 
+[양호] : “보안 감사를 로그할 수 없는 경우 즉시 시스템 종료” 정책이 “사용 안함”으로 되어 있는 경우 
+</Result> 
+</W-27> 
+ 
+<W-28> 
+<Name> SAM 계정과 공유의 익명 열거 허용 안 함 </Name> 
+<Security_Threat> 
+Windows에서는 익명의 사용자가 도메인 계정(사용자, 컴퓨터 및 그룹)과 
+네트워크 공유 이름의 열거 작업을 수행할 수 있으므로 SAM(보안계정관리자) 
+계정과 공유의 익명 열거가 허용될 경우 악의적인 사용자가 계정 이름 목록을 
+확인하고 이 정보를 사용하여 암호를 추측하거나 사회 공학적 공격기법을 
+수행할 수 있음 
+</Security_Threat> 
+<Data> <![CDATA[ 
+#reg query "restrictanonymoussam" 
+ 
+
+HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Lsa
+    restrictanonymoussam    REG_DWORD    0x0
+
+]]> </Data> 
+<Comment> 
+[양호] : 해당 보안 옵션 값이 설정 되어 있는 경우 
+[취약] : 해당 보안 옵션 값이 설정 되어 있지 않는 경우 
+restrictanonymoussam 0x0 = 사용 안함 
+restrictanonymoussam 0x1 = 사용 
+</Comment> 
+<Result> 
+[취약] : 해당 보안 옵션 값이 설정 되어 있지 않는 경우 
+</Result> 
+</W-28> 
+ 
+<W-29> 
+<Name> Autologon 기능 제어 </Name> 
+<Security_Threat> 
+-Windows에서는 익명의 사용자가 도메인 계정(사용자, 컴퓨터 및 그룹)과 
+네트워크 공유 이름의 열거 작업을 수행할 수 있으므로 SAM(보안계정관리자) 
+계정과 공유의 익명 열거가 허용될 경우 악의적인 사용자가 계정 이름 목록을 
+확인하고 이 정보를 사용하여 암호를 추측하거나 사회 공학적 공격기법을 
+수행할 수 있음 
+</Security_Threat> 
+<Data> <![CDATA[ 
+
+HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Lsa
+    restrictanonymoussam    REG_DWORD    0x0
+
+
+HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Lsa
+    restrictanonymous    REG_DWORD    0x1
+
+]]> </Data> 
+<Comment> 
+[양호] : 해당 보안 옵션 값이 설정 되어 있는 경우 
+[취약] : 해당 보안 옵션 값이 설정 되어 있지 않는 경우 
+restrictanonymoussam = 0x0 사용 안함 
+restrictanonymoussam = 0x1 사용 
+restrictanonymous = 0x0 사용 안함 
+restrictanonymous = 0x1 사용 
+</Comment> 
+<Result> 
+[취약] : 해당 보안 옵션 값이 설정 되어 있지 않는 경우 
+</Result> 
+</W-29> 
+ 
+<W-30> 
+<Name> 이동식 미디어 포맷 및 꺼내기 허용 </Name> 
+<Security_Threat> 
+-관리자 이외 사용자에게 해당 정책이 설정된 경우 비인가자에 의한 불법적인 
+매체 처리를 허용할 수 있음 
+</Security_Threat> 
+<Data> <![CDATA[ 
+#reg query "AllocateDASD" 
+ 
+
+HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Winlogon
+    AllocateDASD    REG_SZ    0
+
+]]> </Data> 
+<Comment> 
+[양호] : “이동식 미디어 포맷 및 꺼내기 허용” 정책이 “Administrator”로 되어 있는 경우 
+[취약] : “이동식 미디어 포맷 및 꺼내기 허용” 정책이 “Administrator”로 되어 있지 않은 경우 
+llocateDASD    REG_SZ    0 = Administrator 
+llocateDASD    REG_SZ    1 = Administrator 및 Power Users 
+llocateDASD    REG_SZ    2 = Administrator 및 Interactive Users 
+</Comment> 
+<Result> 
+[양호] : “이동식 미디어 포맷 및 꺼내기 허용” 정책이 “Administrator”로 되어 있는 경우 
+</Result> 
+</W-30> 
+ 
+<W-31> 
+<Name> 디스크볼륨 암호화 설정 </Name> 
+<Security_Threat> 
+-디스크 볼륨이 암호화 되어 있지 않은 경우 비인가자가 데이터를 열람할 수 있음 
+</Security_Threat> 
+<Data> <![CDATA[ 
+#manage-bde -status | findstr /C:"Conversion Status" 
+ 
+]]> </Data> 
+<Comment> 
+[양호] : "데이터 보호를 위해 내용을 암호화" 정책이 선택된 경우 
+[취약] : "데이터 보호를 위해 내용을 암호화" 정책이 선택되어 있지 않은 경우
+</Comment> 
+<Result> 
+[취약] : "데이터 보호를 위해 내용을 암호화" 정책이 선택되어 있지 않은 경우
+</Result> 
+</W-31> 
+ 
+<W-32> 
+<Name> Everyone 사용 권한을 익명 사용자에 적용 해제 </Name> 
+<Security_Threat> 
+-해당 정책이 “사용”으로 설정될 경우 권한이 없는 사용자가 익명으로 계정 
+이름 및 공유 리소스를 나열하고 이 정보를 사용하여 암호를 추측하거나 
+DoS(Denial of Service) 공격을 실행할 수 있음 
+</Security_Threat> 
+<Data> <![CDATA[ 
+reg query "everyoneincludesanonymous" 
+ 
+
+HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Lsa
+    everyoneincludesanonymous    REG_DWORD    0x0
+
+]]> </Data> 
+<Comment> 
+[양호] : “Everyone 사용 권한을 익명 사용자에게 적용” 정책이 “사용 안 함” 으로 되어 있는 경우 
+[취약] : “Everyone 사용 권한을 익명 사용자에게 적용” 정책이 “사용” 으로 되어있는 경우 
+everyoneincludesanonymous = 0x0 사용안함  
+everyoneincludesanonymous = 0x1 사용  
+</Comment> 
+<Result> 
+[양호] : “Everyone 사용 권한을 익명 사용자에게 적용” 정책이 “사용 안 함” 으로 되어 있는 경우 
+</Result> 
+</W-32> 
+ 
+<W-33> 
+<Name> 계정 잠금 기간 설정 </Name> 
+<Security_Threat> 
+-로그인 실패 시 일정 시간 동안 계정 잠금을 하지 않은 경우, 공격자의 자동화된 
+암호 추측 공격이 가능하여, 사용자 계정의 패스워드 정보가 유출될 수 있음 
+</Security_Threat> 
+<Data> <![CDATA[ 
+#net accounts | find /i "Lockout threshold:" 
+ 
+ 
+#net accounts | find "Lockout duration (minutes)" 
+ 
+Lockout duration (minutes):                           30
+ 
+#net accounts | find "Lockout observation window (minutes):" 
+ 
+Lockout observation window (minutes):                 30
+]]> </Data> 
+<Comment> 
+[양호] : 양호 : “계정 잠금 기간” 및 “계정 잠금 기간 원래대로 설정 기간”이 설정되어있는 경(60분 이상의 값으로 설정하기를 권고함) 
+[취약] : 취약 : “계정 잠금 기간” 및 “잠금 기간 원래대로 설정 기간”이 설정되지 않은 경우 
+</Comment> 
+<Result> 
+[취약] : "계정 잠금 임계값"이 설정되어 있지 않은 경우 
+</Result> 
+</W-33> 
+ 
+<W-34> 
+<Name> 패스워드 복잡성 설정 </Name> 
+<Security_Threat> 
+-사용자 암호가 패스워드 복잡성을 만족하지 못하는 반복되는 문자, 연속되는 
+숫자, 계정이름이 포함된 패스워드 등을 사용할 경우 무작위 대입 공격 
+(Brute Force Attack)이나 패스워드 추측 공격(Password Guessing Attack)에 
+쉽게 크랙될 수 있음 
+</Security_Threat> 
+<Data> <![CDATA[ 
+#secedit /EXPORT /CFG "PasswordComplexity" 
+ 
+PasswordComplexity = 0
+]]> </Data> 
+<Comment> 
+[취약] : “암호는 복잡성을 만족해야 함” 정책이 “사용 안 함” 으로 되어 있는 경우 
+[양호] : “암호는 복잡성을 만족해야 함” 정책이 “사용” 으로 되어 있는 경우 
+PasswordComplexity = 0 사용 안함 
+PasswordComplexity = 1 사용 
+</Comment> 
+<Result> 
+[취약] : “암호는 복잡성을 만족해야 함” 정책이 “사용 안 함” 으로 되어 있는 경우 
+</Result> 
+</W-34> 
+ 
+<W-35> 
+<Name> 패스워드 최소 암호 길이 </Name> 
+<Security_Threat> 
+-짧은 패스워드 및 일반적인 단어와 일반적인 어구를 이용해 암호를 설정한 
+경우 사전 공격이나 가능한 모든 문자의 조합을 시도하는 무작위 공격을 통해 
+쉽게 패스워드가 도용될 수 있음 
+</Security_Threat> 
+<Data> <![CDATA[ 
+#net accounts find "Minimum password length" 
+ 
+Minimum password length:                              0
+]]> </Data> 
+<Comment> 
+[양호] : 최소 암호 길이가 8문자 이상으로 설정되어 있는 경우 
+[취약] : 최소 암호 길이가 설정되지 않았거나 8문자 미만으로 설정되어 있는 경우 bad 
+</Comment> 
+<Result> 
+[취약] : 최소 암호 길이가 설정되지 않았거나 8문자 미만으로 설정되어 있는 경우 bad 
+</Result> 
+</W-35> 
+ 
+<W-36> 
+<Name> 패스워드 최대 사용 기간 </Name> 
+<Security_Threat> 
+-오랫동안 변경하지 않은 패스워드를 지속적으로 사용하는 경우 암호 추측 
+공격에 의해 유출될 수 있으므로 사용자가 암호를 자주 바꾸도록 하면 유효한 
+암호가 공격당하는 위험을 줄일 수 있음 
+</Security_Threat> 
+<Data> <![CDATA[ 
+#net accounts find "Maximum password age (days):" 
+ 
+Maximum password age (days):                          42
+]]> </Data> 
+<Comment> 
+[양호] : 최대 암호 사용 기간이 90일 이하로 설정되어 있는 경우 
+[취약] : 최대 암호 사용 기간이 설정되지 않았거나 90일을 초과하는 값으로 설정된 경우 
+</Comment> 
+<Result> 
+[양호] : 최대 암호 사용 기간이 90일 이하로 설정되어 있는 경우 
+</Result> 
+</W-36> 
+ 
+<W-37> 
+<Name> 패스워드 최소 사용 기간 </Name> 
+<Security_Threat> 
+-패스워드 변경 후 최소 사용 기간이 설정되지 않은 경우 사용자에게 익숙한 
+패스워드로 즉시 변동이 가능하여, 이를 재사용함으로써 원래 암호를 같은 날 
+다시 사용할 수 있음 
+-패스워드 변경 정책에 따른 주기적인 패스워드 변경이 무의미해 질 수 있으며, 
+이로 인해 조직의 계정 보안성을 낮출 수 있음 
+</Security_Threat> 
+<Data> <![CDATA[ 
+#net accounts find "Minimum password age (days):" 
+ 
+Minimum password age (days):                          0
+]]> </Data> 
+<Comment> 
+[양호] : 최소 암호 사용 기간이 0보다 큰 값으로 설정되어 있는 경우 
+[취약] : 최소 암호 사용 기간이 0으로 설정되어 있는 경우 
+</Comment> 
+<Result> 
+[취약] : 최소 암호 사용 기간이 0으로 설정되어 있는 경우 
+</Result> 
+</W-37> 
+ 
+<W-38> 
+<Name> 마지막 사용자 이름 표시 안 함 </Name> 
+<Security_Threat> 
+-마지막으로 로그온한 사용자의 이름이 로그온 대화 상자에 표시될 경우 
+공격자는 이를 획득하여 암호를 추측하거나 무작위 공격을 시도할 수 있음 
+</Security_Threat> 
+<Data> <![CDATA[ 
+reg query "dontdisplaylastusername" 
+ 
+
+HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\System
+    dontdisplaylastusername    REG_DWORD    0x0
+
+]]> </Data> 
+<Comment> 
+[취약] : “마지막 사용자 이름 표시 안 함”이 “사용 안 함”으로 설정되어 있는 경우 
+[양호] : “마지막 사용자 이름 표시 안 함”이 “사용”으로 설정되어 있는 경우 
+dontdisplaylastusername = 0x0 사용 안함 
+dontdisplaylastusername = 0x1 사용 
+</Comment> 
+<Result> 
+[취약] : “마지막 사용자 이름 표시 안 함”이 “사용 안 함”으로 설정되어 있는 경우 
+</Result> 
+</W-38> 
+ 
+<W-39> 
+<Name> 로컬 로그온 허용 </Name> 
+<Security_Threat> 
+불필요한 사용자에게 로컬 로그온이 허용된 경우 비인가자를 통한 권한 
+상승을 위한 악성 코드의 실행 우려가 있음 
+</Security_Threat> 
+<Data> <![CDATA[ 
+#secedit /EXPORT /CFG test1.txt | find "SeInteractiveLogonRight" 
+ 
+SeInteractiveLogonRight = __vmware__,Guest,*S-1-5-32-544,*S-1-5-32-545,*S-1-5-32-551
+]]> </Data> 
+<Comment> 
+[양호] : 로컬 로그온 허용 정책에 Administrators, IUSR_ 만 존재하는 경우 
+[취약] : 로컬 로그온 허용 정책에 Administrators, IUSR_ 외 다른 계정 및 그룹이 
+존재하는 경우 
+*S-1-5-32-544 = 관리자*S-1-5-32-545 = 사용자 *S-1-5-32-551 = 백업연산자 
+</Comment> 
+<Result> 
+[수동점검] 
+</Result> 
+</W-39> 
+ 
+<W-40> 
+<Name> 익명 SID/이름 변환 허용 해제 </Name> 
+<Security_Threat> 
+이 정책이 “사용함”으로 설정된 경우 로컬 접근 권한이 있는 사용자가 잘 
+알려진 Administrator SID를 사용하여 Administrator 계정의 실제 이름을 
+알아낼 수 있으며 암호 추측 공격을 실행할 수 있음 
+</Security_Threat> 
+<Data> <![CDATA[ 
+#secedit /EXPORT /CFG | find "EveryoneIncludesAnonymous=" 
+ 
+MACHINE\System\CurrentControlSet\Control\Lsa\EveryoneIncludesAnonymous=4,0
+]]> </Data> 
+<Comment> 
+[양호] : “익명 SID/이름 변환 허용” 정책이 “사용 안 함” 으로 되어 있는 경우 
+[취약] : “익명 SID/이름 변환 허용” 정책이 “사용” 으로 되어 있는 경우 
+EveryoneIncludesAnonymous=4,0 = 사용 안함 
+EveryoneIncludesAnonymous=4,1 = 사용 
+</Comment> 
+<Result> 
+[양호] : “익명 SID/이름 변환 허용” 정책이 “사용 안 함” 으로 되어 있는 경우 
+</Result> 
+</W-40> 
+ 
+<W-41> 
+<Name> 최근 암호 기억 </Name> 
+<Security_Threat> 
+-최근 암호 기억 정책이 설정되지 않은 경우 특정 계정에 동일한 암호를 
+오랫동안 사용하는 것이 가능하여 공격자가 무작위 공격을 통해 패스워드 정보 
+노출 가능성이 커짐 
+</Security_Threat> 
+<Data> <![CDATA[ 
+#net accounts find "Length of password history maintained:" 
+ 
+Length of password history maintained:                4
+]]> </Data> 
+<Comment> 
+[양호] : 최근 암호 기억이 4개 이상으로 설정되어 있는 경우 
+[취약] : 최근 암호 기억이 4개 미만으로 설정되어 있는 경우 
+[취약] : 최근 암호 기억이 설정되어 있지 않은 경우 
+</Comment> 
+<Result> 
+[양호] : 최근 암호 기억이 4개 이상으로 설정되어 있는 경우 
+</Result> 
+</W-41> 
+ 
+<W-42> 
+<Name> 콘솔 로그온 시 로컬 계정에서 빈 암호 사용 제한 </Name> 
+<Security_Threat> 
+-이 정책이 “사용 안 함”으로 설정된 경우 빈 암호를 가진 로컬 계정에 대하여 
+터미널 서비스(원격 데스크톱 서비스), Telnet 및 FTP와 같은 네트워크 
+서비스의 원격 대화형 로그온이 가능하여, 시스템 보안에 심각한 위험을 줄 수 있음 
+</Security_Threat> 
+<Data> <![CDATA[ 
+#reg query "LimitBlankPasswordUse" 
+ 
+    LimitBlankPasswordUse    REG_DWORD    0x0
+]]> </Data> 
+<Comment> 
+[양호] : “콘솔 로그온 시 로컬 계정에서 빈 암호 사용 제한” 정책이 “사용”인 경우 
+[취약] : “콘솔 로그온 시 로컬 계정에서 빈 암호 사용 제한” 정책이 “사용 안 함”인 경우 
+LimitBlankPasswordUse = 0x0 사용안함 
+LimitBlankPasswordUse = 0x1 사용 
+</Comment> 
+<Result> 
+[취약] : “콘솔 로그온 시 로컬 계정에서 빈 암호 사용 제한” 정책이 “사용 안 함”인 경우 
+</Result> 
+</W-42> 
+ 
+<W-43> 
+<Name> 원격터미널 접속 가능한 사용자 그룹 제한 </Name> 
+<Security_Threat> 
+-원격터미널의 그룹이나 계정을 제한하지 않으면 임의의 사용자가 원격으로 
+접속하여 해당 서버에 정보를 변경하거나 정보가 유출될 가능성이 있으므로 
+사용자 그룹과 계정을 설정하여 접속을 제한하여야 함 
+</Security_Threat> 
+<Data> <![CDATA[ 
+
+GROUP INFORMATION
+-----------------
+
+Group Name                                   Type             SID                                                                                                         Attributes                                                     
+============================================ ================ =========================================================================================================== ===============================================================
+Mandatory Label\High Mandatory Level         Label            S-1-16-12288                                                                                                                                                               
+Everyone                                     Well-known group S-1-1-0                                                                                                     Mandatory group, Enabled by default, Enabled group             
+NT AUTHORITY\?? ?? ? ??? ?? ??? Well-known group S-1-5-114                                                                                                   Mandatory group, Enabled by default, Enabled group             
+BUILTIN\Administrators                       Alias            S-1-5-32-544                                                                                                Mandatory group, Enabled by default, Enabled group, Group owner
+BUILTIN\Users                                Alias            S-1-5-32-545                                                                                                Mandatory group, Enabled by default, Enabled group             
+NT AUTHORITY\INTERACTIVE                     Well-known group S-1-5-4                                                                                                     Mandatory group, Enabled by default, Enabled group             
+CONSOLE LOGON                                Well-known group S-1-2-1                                                                                                     Mandatory group, Enabled by default, Enabled group             
+NT AUTHORITY\Authenticated Users             Well-known group S-1-5-11                                                                                                    Mandatory group, Enabled by default, Enabled group             
+NT AUTHORITY\This Organization               Well-known group S-1-5-15                                                                                                    Mandatory group, Enabled by default, Enabled group             
+MicrosoftAccount\kongji0819@gmail.com        User             S-1-11-96-3623454863-58364-18864-2661722203-1597581903-1625640525-254176837-162230348-3567457790-1310112095 Mandatory group, Enabled by default, Enabled group             
+NT AUTHORITY\?? ??                       Well-known group S-1-5-113                                                                                                   Mandatory group, Enabled by default, Enabled group             
+LOCAL                                        Well-known group S-1-2-0                                                                                                     Mandatory group, Enabled by default, Enabled group             
+NT AUTHORITY\???? ?? ??              Well-known group S-1-5-64-36                                                                                                 Mandatory group, Enabled by default, Enabled group             
+Alias name     Administrators
+Comment        컴퓨터 도메인에 모든 액세스 권한을 가진 관리자입니다.
+
+Members
+
+-------------------------------------------------------------------------------
+Administrator
+kongji
+The command completed successfully.
+
+Alias name     Remote Desktop Users
+Comment        이 그룹의 구성원은 원격으로 로그온할 수 있는 권한이 주어집니다.
+
+Members
+
+-------------------------------------------------------------------------------
+The command completed successfully.
+
+    fDenyTSConnections    REG_DWORD    0x0
+]]> </Data> 
+<Comment> 
+[양호] : (관리자 계정을 제외한) 원격접속이 가능한 계정을 생성하여 타 사용자의 
+원격접속을 제한하고, 원격접속 사용자 그룹에 불필요한 계정이 
+등록되어 있지 않은 경우 
+[취약] : (관리자 계정을 제외한) 원격접속이 가능한 별도의 계정이 존재하지 않는 경우 
+</Comment> 
+<Result> 
+[인터뷰] : 원격접속 사용자 그룹 내 관리자 계정을 제외한 계정 중 반드시 필요한 계정만 등록되어 있는지 확인 
+</Result> 
+</W-43> 
+ 
+<W-44> 
+<Name> 터미널 서비스 암호화 수준 설정 </Name> 
+<Security_Threat> 
+-서버 접속 시에 낮은 암호화 수준을 적용할 경우 악의적인 사용자에 의해 
+서버와 클라이언트간 주고받는 정보가 노출될 우려가 있음 
+</Security_Threat> 
+<Data> <![CDATA[ 
+#net start find "TermService" 
+ 
+#reg query "MinEncryptionLevel" 
+ 
+
+HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\Windows NT\Terminal Services
+    MinEncryptionLevel    REG_DWORD    0x2
+
+]]> </Data> 
+<Comment> 
+[양호] : 터미널 서비스 암호화 수준을 “높은 수준” 으로 설정한 경우 
+[양호] : 터미널 서비스 암호화 수준을 “클라이언트와호환 가능(중간)” 이상으로 설정한 경우 
+[취약] : 터미널 서비스를 사용하고 암호화 수준이 “낮음” 으로 설정한 경우 
+MinEncryptionLevel    REG_DWORD    0x1 = 낮음 
+MinEncryptionLevel    REG_DWORD    0x2 = 클라이언트와호환 가능(중간) 
+MinEncryptionLevel    REG_DWORD    0x3 = 높은수준 
+</Comment> 
+<Result> 
+[양호] : 터미널 서비스를 사용하고 있지 않은 경우 
+</Result> 
+</W-44> 
+ 
+<W-45> 
+<Name> SNMP 서비스 구동 점검 </Name> 
+<Security_Threat> 
+-취약한 SNMP 서비스를 사용하는 경우 서비스거부공격(DoS, DDoS), 버퍼 
+오버플로우, 비인가 접속 등의 공격의 위험이 있음 
+</Security_Threat> 
+<Data> <![CDATA[ 
+#net start | find "SNMP" 
+ 
+]]> </Data> 
+<Comment> 
+[양호] : SNMP 서비스를 사용하지 않는 경우 
+[취약] : SNMP 서비스를 사용하는 경우 
+</Comment> 
+<Result> 
+[양호] : SNMP 서비스를 사용하지 않는 경우 
+</Result> 
+</W-45> 
+ 
+<W-46> 
+<Name> SNMP 서비스 커뮤니티스트링의 복잡성 설정 </Name> 
+<Security_Threat> 
+-Community String 설정을 변경하지 않고 public, private 등 Default 설정 
+값으로 사용하는 경우, 기본 String 값을 통한 시스템의 주요 정보 및 설정 
+상태의 비인가자 노출 위험이 존재 
+</Security_Threat> 
+<Data> <![CDATA[ 
+#net start | find "SNMP Service" 
+#reg query "HKLM\SYSTEM\CurrentControlSet\Services\SNMP\Parameters\ValidCommunities" /s | find /v "Listing" 
+ 
+]]> </Data> 
+<Comment> 
+[N/A] SNMP 서비스를 사용하지 않는 경우 
+[양호] : SNMP 서비스를 사용하지 않거나 Community String이 public, private이 아닌 경우 
+[취약] : SNMP 서비스를 사용하며, Community String이 public, private인 경우 
+*public, private = 1(1) (속성 없음) 
+*public, private = 2(2) (알림 송석) 
+*public, private = 4(4) (읽기전용 속성) 
+*public, private = 8(8) (읽기,쓰기 전용 속성) 
+*public, private = 10(16) (읽기,만들기 전용 속성) 
+</Comment> 
+<Result> 
+[N/A] SNMP 서비스를 사용하지 않으므로 해당없음 
+</Result> 
+</W-46> 
+ 
+<W-47> 
+<Name> SNMP Access control 설정 </Name> 
+<Security_Threat> 
+SNMP Access control 설정을 적용하지 않아 인증되지 않은 내부 서버로부 
+터의 SNMP 트래픽을 차단하지 않을 경우, 장치 구성 변경, 라우팅 테이블 
+조작, 악의적인 TFTP 서버 구동 등의 SNMP 공격에 노출될 수 있음 
+</Security_Threat> 
+<Data> <![CDATA[ 
+# net start | find "SNMP Service" 
+ 
+#reg query "HKLM\SYSTEM\CurrentControlSet\Services\SNMP\Parameters\PermittedManagers" 
+ 
+]]> </Data> 
+<Comment> 
+[양호] : 특정 호스트로부터 SNMP 패킷 받아들이기로 설정되어 있는 경우 
+[취약] : 모든 호스트로부터 SNMP 패킷 받아들이기로 설정되어 있는 경우 
+[N/A] : SMTP 서비스를 사용하지 않는 경우 
+*PermittedManagers = 인증 트랩 보내기 및 다음 호스트로부터 SNMP 패킷 받아들이기 
+*PermittedManagers 항목에 localhost만 존재시 양호, host name, IP가 등록되어 있다면 판단 후 진단 
+*PermittedManagers 값이 없으면 취약 
+</Comment> 
+<Result> 
+[N/A] : SMTP 서비스를 사용하지 않는 경우 
+</Result> 
+</W-47> 
+ 
+<W-48> 
+<Name> DNS 서비스 구동 점검 </Name> 
+<Security_Threat> 
+</Security_Threat> 
+<Data> <![CDATA[ 
+#net start | find "DNS Server" 
+ 
+#reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\DNS Server\Zones" /s | find "AllowUpdate" 
+ 
+]]> </Data> 
+<Comment> 
+[양호] : DNS 서비스를 사용하지 않거나 동적 업데이트 “없음(아니오)”으로 설정 
+되어 있는 경우 
+[취약] : 서비스를 사용하며 동적 업데이트가 설정되어 있는 경우 
+*AllowUpdate = 동적 업데이트 사용여부 
+*AllowUpdate = 0(사용안함) - 양호 
+*AllowUpdate = 1(사용함) - 취약 
+</Comment> 
+<Result> 
+[N/A] DNS 서비스를 사용하지 않으므로 해당없음 
+</Result> 
+</W-48> 
+ 
+<W-49> 
+<Name> Telnet 보안 설정 </Name> 
+<Security_Threat> 
+-Telnet 서비스는 평문으로 데이터를 송수신하기 때문에 Password 방식으로 
+인증을 수행할 경우 ID 및 Password가 외부로 노출될 위험성이 있음 
+</Security_Threat> 
+<Data> <![CDATA[ 
+]]> </Data> 
+<Comment> 
+[N/A] 2016버전 이상 부터는 대상이 아님 
+</Comment> 
+<Result> 
+[N/A] 2016버전 이상 부터는 대상이 아님 
+</Result> 
+</W-49> 
+ 
+<W-50> 
+<Name> 불필요한 ODBC/OLE-DB 데이터 소스와 드라이브 제거 </Name> 
+<Security_Threat> 
+-불필요한 ODBC/OLE-DB 데이터 소스를 통한 비인가자에 의한 데이터베이스 
+접속 및 자료 유출 위험 존재 
+</Security_Threat> 
+<Data> <![CDATA[ 
+#reg query "HKLM\SOFTWARE\ODBC\ODBC.INI\ODBC Data Sources" | find /i "reg_sz" 
+]]> </Data> 
+<Comment> 
+[양호] : 시스템 DSN 부분의 Data Source를 현재 사용하고 있는 경우 
+[취약] : 시스템 DSN 부분의 Data Source를 현재 사용하고 있지 않은 경우 
+</Comment> 
+<Result> 
+[양호] : 시스템 DSN 부분의 Data Source를 현재 사용하고 있는 경우 
+</Result> 
+</W-50> 
+ 
+<W-51> 
+<Name> 원격터미널 접속 타임아웃 설정 </Name> 
+<Security_Threat> 
+-접속 타임아웃 값이 설정되지 않은 경우 유휴 시간 내 비인가자의 시스템 
+접근으로 인해 불필요한 내부 정보의 노출 위험이 존재함 
+</Security_Threat> 
+<Data> <![CDATA[ 
+#net start | find "Remote Desktop Services" 
+   Remote Desktop Services
+   Remote Desktop Services UserMode Port Redirector
+ 
+ 
+]]> </Data> 
+<Comment> 
+[양호] : 원격제어 시 Timeout 제어 설정을 적용한 경우 
+[취약] : 원격제어 시 Timeout 제어 설정을 적용하지 않은 경우 
+MaxIdleTime 0xea60 = 1분 
+MaxIdleTime 0x493e0 = 5분 
+MaxIdleTime 0x927c0 = 10분 
+MaxIdleTime 0xdbba0 = 15분 
+MaxIdleTime 0x1b7740 = 30분 
+</Comment> 
+<Result> 
+[취약] : 레지스트리가 구성이 안되어 있을 경우 
+</Result> 
+</W-51> 
+ 
+<W-52> 
+<Name> 예약된 작업에 의심스러운 명령이 등록되어 있는지 점검 </Name> 
+<Security_Threat> 
+-일정 시간마다 미리 설정해둔 프로그램을 실행할 수 있는 예약된 작업은 
+시작프로그램과 더불어서 해킹과 트로이 목마, 백도어를 설치하여 공격하기 좋은 
+루트로 사용될 수 있음 
+</Security_Threat> 
+<Data> <![CDATA[  
+#schtasks 
+ 
+
+Folder: \
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+dts_apo_service_task                     N/A                    Ready          
+GoogleUpdateTaskMachineCore              2021-07-23 ?? 2:20:2 Ready          
+GoogleUpdateTaskMachineUA                2021-07-23 ?? 1:20:2 Ready          
+Intel PTT EK Recertification             N/A                    Ready          
+LGSCStart                                N/A                    Ready          
+LGUpdateCenter                           2021-07-23 ?? 7:00:0 Ready          
+MicrosoftEdgeUpdateTaskMachineCore       2021-07-24 ?? 11:55: Ready          
+MicrosoftEdgeUpdateTaskMachineUA         2021-07-23 ?? 1:25:0 Ready          
+OneDrive Per-Machine Standalone Update T 2021-07-23 ?? 9:56:1 Ready          
+User_Feed_Synchronization-{D0842F93-6D29 2021-07-23 ?? 2:58:3 Ready          
+
+Folder: \Microsoft
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+INFO: There are no scheduled tasks presently available at your access level.
+
+Folder: \Microsoft\Office
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+Office Automatic Updates 2.0             2021-07-24 ?? 5:54:0 Ready          
+Office ClickToRun Service Monitor        2021-07-24 ?? 6:20:0 Ready          
+Office Feature Updates                   2021-07-23 ?? 6:09:2 Ready          
+Office Feature Updates Logon             N/A                    Ready          
+OfficeTelemetryAgentFallBack2016         N/A                    Ready          
+OfficeTelemetryAgentLogOn2016            N/A                    Ready          
+
+Folder: \Microsoft\Windows
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+INFO: There are no scheduled tasks presently available at your access level.
+
+Folder: \Microsoft\Windows\.NET Framework
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+.NET Framework NGEN v4.0.30319           N/A                    Ready          
+.NET Framework NGEN v4.0.30319 64        N/A                    Ready          
+.NET Framework NGEN v4.0.30319 64 Critic N/A                    Disabled       
+.NET Framework NGEN v4.0.30319 Critical  N/A                    Disabled       
+
+Folder: \Microsoft\Windows\Active Directory Rights Management Services Client
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+AD RMS Rights Policy Template Management N/A                    Disabled       
+AD RMS Rights Policy Template Management N/A                    Ready          
+
+Folder: \Microsoft\Windows\AppID
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+EDP Policy Manager                       N/A                    Ready          
+PolicyConverter                          N/A                    Disabled       
+VerifiedPublisherCertStoreCheck          N/A                    Disabled       
+
+Folder: \Microsoft\Windows\Application Experience
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+Microsoft Compatibility Appraiser        2021-07-24 ?? 4:07:0 Ready          
+ProgramDataUpdater                       N/A                    Ready          
+StartupAppTask                           N/A                    Ready          
+
+Folder: \Microsoft\Windows\ApplicationData
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+appuriverifierdaily                      N/A                    Ready          
+appuriverifierinstall                    N/A                    Ready          
+CleanupTemporaryState                    N/A                    Ready          
+DsSvcCleanup                             N/A                    Ready          
+
+Folder: \Microsoft\Windows\AppxDeploymentClient
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+Pre-staged app cleanup                   N/A                    Disabled       
+
+Folder: \Microsoft\Windows\Autochk
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+Proxy                                    N/A                    Ready          
+
+Folder: \Microsoft\Windows\BitLocker
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+BitLocker MDM policy Refresh             N/A                    Ready          
+
+Folder: \Microsoft\Windows\Bluetooth
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+UninstallDeviceTask                      N/A                    Ready          
+
+Folder: \Microsoft\Windows\BrokerInfrastructure
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+BgTaskRegistrationMaintenanceTask        N/A                    Ready          
+
+Folder: \Microsoft\Windows\CertificateServicesClient
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+AikCertEnrollTask                        N/A                    Ready          
+CryptoPolicyTask                         N/A                    Ready          
+KeyPreGenTask                            N/A                    Ready          
+SystemTask                               N/A                    Ready          
+UserTask                                 N/A                    Ready          
+UserTask-Roam                            N/A                    Ready          
+
+Folder: \Microsoft\Windows\Chkdsk
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+ProactiveScan                            N/A                    Ready          
+SyspartRepair                            N/A                    Ready          
+
+Folder: \Microsoft\Windows\Clip
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+License Validation                       N/A                    Disabled       
+
+Folder: \Microsoft\Windows\CloudExperienceHost
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+CreateObjectTask                         N/A                    Ready          
+
+Folder: \Microsoft\Windows\CUAssistant
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+CULauncher                               2021-07-24 ?? 1:10:0 Ready          
+
+Folder: \Microsoft\Windows\Customer Experience Improvement Program
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+Consolidator                             2021-07-23 ?? 6:00:0 Ready          
+UsbCeip                                  N/A                    Ready          
+
+Folder: \Microsoft\Windows\Data Integrity Scan
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+Data Integrity Scan                      2021-08-06 ?? 2:24:3 Ready          
+Data Integrity Scan for Crash Recovery   N/A                    Ready          
+
+Folder: \Microsoft\Windows\Defrag
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+ScheduledDefrag                          N/A                    Ready          
+
+Folder: \Microsoft\Windows\Device Information
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+Device                                   2021-07-24 ?? 3:10:0 Ready          
+
+Folder: \Microsoft\Windows\Device Setup
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+Metadata Refresh                         N/A                    Ready          
+
+Folder: \Microsoft\Windows\DeviceDirectoryClient
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+HandleCommand                            N/A                    Ready          
+HandleWnsCommand                         N/A                    Ready          
+IntegrityCheck                           N/A                    Disabled       
+LocateCommandUserSession                 N/A                    Ready          
+RegisterDeviceAccountChange              N/A                    Ready          
+RegisterDeviceLocationRightsChange       N/A                    Ready          
+RegisterDevicePeriodic24                 2021-07-24 ?? 2:54:4 Ready          
+RegisterDevicePolicyChange               N/A                    Ready          
+RegisterDeviceProtectionStateChanged     N/A                    Ready          
+RegisterDeviceSettingChange              N/A                    Ready          
+RegisterUserDevice                       N/A                    Ready          
+
+Folder: \Microsoft\Windows\Diagnosis
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+Scheduled                                N/A                    Ready          
+
+Folder: \Microsoft\Windows\DiskCleanup
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+SilentCleanup                            N/A                    Ready          
+
+Folder: \Microsoft\Windows\DiskDiagnostic
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+Microsoft-Windows-DiskDiagnosticDataColl N/A                    Disabled       
+Microsoft-Windows-DiskDiagnosticResolver N/A                    Disabled       
+
+Folder: \Microsoft\Windows\DiskFootprint
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+Diagnostics                              N/A                    Ready          
+StorageSense                             N/A                    Ready          
+
+Folder: \Microsoft\Windows\DUSM
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+dusmtask                                 N/A                    Ready          
+
+Folder: \Microsoft\Windows\EDP
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+EDP App Launch Task                      N/A                    Ready          
+EDP Auth Task                            N/A                    Ready          
+EDP Inaccessible Credentials Task        N/A                    Ready          
+StorageCardEncryption Task               N/A                    Ready          
+
+Folder: \Microsoft\Windows\ExploitGuard
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+ExploitGuard MDM policy Refresh          N/A                    Ready          
+
+Folder: \Microsoft\Windows\Feedback
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+INFO: There are no scheduled tasks presently available at your access level.
+
+Folder: \Microsoft\Windows\Feedback\Siuf
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+DmClient                                 N/A                    Ready          
+DmClientOnScenarioDownload               N/A                    Ready          
+
+Folder: \Microsoft\Windows\File Classification Infrastructure
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+Property Definition Sync                 N/A                    Disabled       
+
+Folder: \Microsoft\Windows\FileHistory
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+File History (maintenance mode)          N/A                    Ready          
+
+Folder: \Microsoft\Windows\LanguageComponentsInstaller
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+Installation                             N/A                    Ready          
+Uninstallation                           N/A                    Disabled       
+
+Folder: \Microsoft\Windows\License Manager
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+TempSignedLicenseExchange                N/A                    Ready          
+
+Folder: \Microsoft\Windows\Live
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+INFO: There are no scheduled tasks presently available at your access level.
+
+Folder: \Microsoft\Windows\Location
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+Notifications                            N/A                    Ready          
+WindowsActionDialog                      N/A                    Ready          
+
+Folder: \Microsoft\Windows\Maintenance
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+WinSAT                                   N/A                    Ready          
+
+Folder: \Microsoft\Windows\Management
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+INFO: There are no scheduled tasks presently available at your access level.
+
+Folder: \Microsoft\Windows\Management\Provisioning
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+Cellular                                 N/A                    Ready          
+Logon                                    N/A                    Ready          
+
+Folder: \Microsoft\Windows\Maps
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+MapsToastTask                            N/A                    Ready          
+MapsUpdateTask                           N/A                    Disabled       
+
+Folder: \Microsoft\Windows\MemoryDiagnostic
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+ProcessMemoryDiagnosticEvents            N/A                    Ready          
+RunFullMemoryDiagnostic                  N/A                    Ready          
+
+Folder: \Microsoft\Windows\Mobile Broadband Accounts
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+MNO Metadata Parser                      N/A                    Ready          
+
+Folder: \Microsoft\Windows\MUI
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+LPRemove                                 N/A                    Ready          
+
+Folder: \Microsoft\Windows\Multimedia
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+SystemSoundsService                      N/A                    Running        
+
+Folder: \Microsoft\Windows\NetTrace
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+GatherNetworkInfo                        N/A                    Ready          
+
+Folder: \Microsoft\Windows\NlaSvc
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+WiFiTask                                 N/A                    Ready          
+
+Folder: \Microsoft\Windows\Offline Files
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+Background Synchronization               N/A                    Disabled       
+Logon Synchronization                    N/A                    Disabled       
+
+Folder: \Microsoft\Windows\PI
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+Secure-Boot-Update                       N/A                    Ready          
+Sqm-Tasks                                N/A                    Ready          
+
+Folder: \Microsoft\Windows\PLA
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+INFO: There are no scheduled tasks presently available at your access level.
+
+Folder: \Microsoft\Windows\Plug and Play
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+Device Install Group Policy              N/A                    Ready          
+Device Install Reboot Required           N/A                    Ready          
+Sysprep Generalize Drivers               N/A                    Ready          
+
+Folder: \Microsoft\Windows\Power Efficiency Diagnostics
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+AnalyzeSystem                            N/A                    Ready          
+
+Folder: \Microsoft\Windows\Printing
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+EduPrintProv                             N/A                    Ready          
+
+Folder: \Microsoft\Windows\PushToInstall
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+LoginCheck                               N/A                    Disabled       
+Registration                             2021-08-09 ?? 2:27:5 Ready          
+
+Folder: \Microsoft\Windows\Ras
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+MobilityManager                          N/A                    Ready          
+
+Folder: \Microsoft\Windows\RecoveryEnvironment
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+VerifyWinRE                              N/A                    Disabled       
+
+Folder: \Microsoft\Windows\Registry
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+RegIdleBackup                            N/A                    Ready          
+
+Folder: \Microsoft\Windows\RemoteAssistance
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+RemoteAssistanceTask                     N/A                    Ready          
+
+Folder: \Microsoft\Windows\rempl
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+shell                                    2021-07-24 ?? 12:50: Ready          
+
+Folder: \Microsoft\Windows\Servicing
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+StartComponentCleanup                    N/A                    Ready          
+
+Folder: \Microsoft\Windows\SettingSync
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+BackgroundUploadTask                     N/A                    Ready          
+BackupTask                               N/A                    Ready          
+NetworkStateChangeTask                   N/A                    Ready          
+
+Folder: \Microsoft\Windows\SharedPC
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+Account Cleanup                          N/A                    Disabled       
+
+Folder: \Microsoft\Windows\Shell
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+CreateObjectTask                         N/A                    Ready          
+FamilySafetyMonitor                      N/A                    Ready          
+FamilySafetyMonitorToastTask             N/A                    Disabled       
+FamilySafetyRefreshTask                  N/A                    Ready          
+IndexerAutomaticMaintenance              N/A                    Ready          
+
+Folder: \Microsoft\Windows\SoftwareProtectionPlatform
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+SvcRestartTask                           2021-07-23 ?? 4:38:4 Ready          
+SvcRestartTaskLogon                      N/A                    Ready          
+SvcRestartTaskNetwork                    N/A                    Ready          
+
+Folder: \Microsoft\Windows\SpacePort
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+SpaceAgentTask                           N/A                    Ready          
+SpaceManagerTask                         N/A                    Ready          
+
+Folder: \Microsoft\Windows\Speech
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+SpeechModelDownloadTask                  2021-07-24 ?? 3:20:0 Ready          
+
+Folder: \Microsoft\Windows\Storage Tiers Management
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+Storage Tiers Management Initialization  N/A                    Ready          
+Storage Tiers Optimization               N/A                    Disabled       
+
+Folder: \Microsoft\Windows\Subscription
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+EnableLicenseAcquisition                 N/A                    Ready          
+LicenseAcquisition                       N/A                    Disabled       
+
+Folder: \Microsoft\Windows\Sysmain
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+HybridDriveCachePrepopulate              N/A                    Disabled       
+HybridDriveCacheRebalance                N/A                    Disabled       
+ResPriStaticDbSync                       N/A                    Ready          
+WsSwapAssessmentTask                     N/A                    Ready          
+
+Folder: \Microsoft\Windows\SystemRestore
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+SR                                       N/A                    Ready          
+
+Folder: \Microsoft\Windows\Task Manager
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+Interactive                              N/A                    Ready          
+
+Folder: \Microsoft\Windows\TextServicesFramework
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+MsCtfMonitor                             N/A                    Ready          
+
+Folder: \Microsoft\Windows\Time Synchronization
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+ForceSynchronizeTime                     N/A                    Ready          
+SynchronizeTime                          N/A                    Ready          
+
+Folder: \Microsoft\Windows\Time Zone
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+SynchronizeTimeZone                      N/A                    Ready          
+
+Folder: \Microsoft\Windows\TPM
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+Tpm-HASCertRetr                          N/A                    Ready          
+Tpm-Maintenance                          N/A                    Ready          
+
+Folder: \Microsoft\Windows\UNP
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+RunUpdateNotificationMgr                 N/A                    Disabled       
+
+Folder: \Microsoft\Windows\UpdateAssistant
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+UpdateAssistant                          N/A                    Ready          
+UpdateAssistantAllUsersRun               N/A                    Ready          
+UpdateAssistantCalendarRun               2021-07-24 ?? 3:02:4 Ready          
+UpdateAssistantWakeupRun                 2021-07-24 ?? 1:25:5 Ready          
+
+Folder: \Microsoft\Windows\UpdateOrchestrator
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+Maintenance Install                      N/A                    Disabled       
+Reboot                                   N/A                    Disabled       
+Schedule Scan                            2021-07-24 ?? 11:48: Ready          
+USO_Broker_Display                       N/A                    Ready          
+
+Folder: \Microsoft\Windows\UPnP
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+UPnPHostConfig                           N/A                    Ready          
+
+Folder: \Microsoft\Windows\USB
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+Usb-Notifications                        N/A                    Ready          
+
+Folder: \Microsoft\Windows\User Profile Service
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+HiveUploadTask                           N/A                    Disabled       
+
+Folder: \Microsoft\Windows\WaaSMedic
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+PerformRemediation                       2021-07-24 ?? 6:10:3 Ready          
+
+Folder: \Microsoft\Windows\WCM
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+WiFiTask                                 N/A                    Ready          
+
+Folder: \Microsoft\Windows\WDI
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+ResolutionHost                           N/A                    Ready          
+
+Folder: \Microsoft\Windows\Windows Defender
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+Windows Defender Cache Maintenance       N/A                    Ready          
+Windows Defender Cleanup                 N/A                    Ready          
+Windows Defender Scheduled Scan          N/A                    Ready          
+Windows Defender Verification            N/A                    Ready          
+
+Folder: \Microsoft\Windows\Windows Error Reporting
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+QueueReporting                           2021-07-23 ?? 12:58: Ready          
+
+Folder: \Microsoft\Windows\Windows Filtering Platform
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+BfeOnServiceStartTypeChange              N/A                    Ready          
+
+Folder: \Microsoft\Windows\Windows Media Sharing
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+UpdateLibrary                            N/A                    Ready          
+
+Folder: \Microsoft\Windows\WindowsColorSystem
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+Calibration Loader                       N/A                    Ready          
+
+Folder: \Microsoft\Windows\WindowsUpdate
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+Automatic App Update                     2021-07-23 ?? 2:41:3 Ready          
+Scheduled Start                          2021-07-23 ?? 7:49:3 Ready          
+sih                                      2021-07-24 ?? 6:53:0 Ready          
+sihboot                                  N/A                    Ready          
+
+Folder: \Microsoft\Windows\WindowsUpdate\RUXIM
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+RUXIMDisplay                             2021-07-24 ?? 11:42: Ready          
+RUXIMSync                                2021-07-24 ?? 9:32:5 Ready          
+
+Folder: \Microsoft\Windows\Wininet
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+CacheTask                                N/A                    Running        
+
+Folder: \Microsoft\Windows\WOF
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+WIM-Hash-Management                      N/A                    Ready          
+WIM-Hash-Validation                      N/A                    Disabled       
+
+Folder: \Microsoft\Windows\Work Folders
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+Work Folders Logon Synchronization       N/A                    Ready          
+Work Folders Maintenance Work            N/A                    Ready          
+
+Folder: \Microsoft\Windows\Workplace Join
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+Automatic-Device-Join                    N/A                    Disabled       
+Recovery-Check                           N/A                    Disabled       
+
+Folder: \Microsoft\Windows\WwanSvc
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+NotificationTask                         N/A                    Ready          
+
+Folder: \Microsoft\XblGameSave
+TaskName                                 Next Run Time          Status         
+======================================== ====================== ===============
+XblGameSaveTask                          N/A                    Ready          
+]]> </Data> 
+<Comment> 
+[양호] : 불필요한 명령어나 파일 등 주기적인 예약 작업의 존재 여부를 주기적으로 점검하고 제거한 경우 
+[취약] : 불필요한 명령어나 파일 등 주기적인 예약 작업의 존재 여부를 주기적으로 점검하지 않거나, 해당 작업을 제거하지 않은 경우 
+</Comment> 
+<Result> 
+[인터뷰] 
+</Result> 
+</W-52> 
+ 
+<W-53> 
+<Name> 정책에 따른 시스템 로깅 설정 </Name> 
+<Security_Threat> 
+-감사 설정이 구성되어 있지 않거나 감사 설정 수준이 너무 낮은 경우 보안 
+관련 문제 발생 시 원인을 파악하기 어려우며 법적 대응을 위한 충분한 증거 
+확보가 어려움 
+</Security_Threat> 
+<Data> <![CDATA[  
+AuditObjectAccess = 0
+AuditAccountManage = 2
+AuditAccountLogon = 3
+AuditPrivilegeUse = 2
+AuditDSAccess = 2
+AuditLogonEvents = 3
+AuditSystemEvents = 0
+AuditPolicyChange = 3
+AuditProcessTracking = 0
+]]> </Data> 
+<Comment> 
+[양호] : 감사 정책 권고 기준에 따라 감사 설정이 되어 있는 경우 
+[취약] : 감사 정책 권고 기준에 따라 감사 설정이 되어 있지 않는 경우 
+"AuditObjectAccess" = 개체 액세스 감사 
+"AuditAccountManage" = 계정 관리 감사 
+"AuditAccountLogon" = 계정 로그온 이벤트 감사 
+"AuditPrivilegeUse" = 권한 사용 감사 
+"AuditDSAccess" = 디렉터리 서비스 액세스 감사 
+"AuditLogonEvents" = 로그온 이벤트 감사 
+"AuditSystemEvents" = 시스템 이벤트 감사 
+"AuditPolicyChange" = 정책 변경 감사 
+"AuditProcessTracking" = 프로세스 추적 감사 
+0 = 감사안함 1 = 성공 2 = 실패 
+</Comment> 
+<Result> 
+[양호] : 감사 정책 권고 기준에 따라 감사 설정이 되어 있는 경우 
+</Result> 
+</W-53> 
+ 
+<W-54> 
+<Name> 이벤트 로그 관리 설정 </Name> 
+<Security_Threat> 
+이벤트 로그 파일의 크기가 충분하지 않을 경우 중요 로그가 저장되지 않을 
+위험이 있음 
+</Security_Threat> 
+<Data> <![CDATA[  
+##최대 로그 크기 
+ 
+#reg query "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\EventLog\Application" /v "MaxSize" 
+ 
+
+HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\EventLog\Application
+    MaxSize    REG_DWORD    0xa00000
+
+#reg query "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\EventLog\Security" /v "MaxSize" 
+ 
+
+HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\EventLog\Security
+    MaxSize    REG_DWORD    0xa00000
+
+#reg query "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\EventLog\System" /v "MaxSize" 
+ 
+
+HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\EventLog\System
+    MaxSize    REG_DWORD    0xa00000
+
+ 
+##최대 이벤트 로그 크기에 도달할 때 
+ 
+#reg query "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\EventLog\Application" /v "Retention" 
+ 
+    Retention    REG_DWORD    0xffffffff
+#reg query "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\EventLog\Security" /v "Retention" 
+ 
+#reg query "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\EventLog\System" /v "Retention" 
+ 
+]]> </Data> 
+<Comment> 
+[양호] : 최대 로그 크기 “10,240KB 이상”으로 설정, 로그가 꽉 차면 로그 보관,이벤트를 덮어쓰지않음 OR 이벤트 덮어쓰지 않음(수동으로 로그 지우기)  
+[취약] : 최대 로그 크기 “10,240KB 미만”으로 설정, 이벤트 덮어씀 기간이 “90일 이하”로 설정된 경우  
+Application = 응용 프로그램, Security = 보안, System = 시스템 
+MaxSize가 0xa00000 이상이여야 양호 
+Retention 0x0 = 필요한 경우 이벤트 덮어쓰기(가장 오래된 이벤트 먼저) 
+Retention 0xffffffff = 로그가 꽉 차면 로그 보관, 이벤트를 덮어쓰지 않음 OR 이벤트 덮어쓰지 않음(수동으로 로그 지우기) 
+</Comment> 
+<Result> 
+[취약] : 최대 로그 크기 “10,240KB 미만”으로 설정, 이벤트 덮어씀 기간이 “90일 이하”로 설정된 경우 
+</Result> 
+</W-54> 
+<W-55> 
+<Name> 원격에서 이벤트 로그 파일 접근 차단 </Name> 
+<Security_Threat>
+-원격 익명 사용자의 시스템 로그 파일에 접근이 가능한 경우 ‘중요 시스템 
+로그’ 파일 및 ‘애플리케이션 로그’ 등 중요 보안 감사 정보의 변조·삭제·유출 
+의 위험이 존재 
+</Security_Threat>
+<Data> <![CDATA[ 
+#cacls systemroot\system32\config 
+ 
+C:\Windows\system32\config NT SERVICE\TrustedInstaller:(CI)(F)
+                           NT AUTHORITY\SYSTEM:(OI)(CI)(F)
+                           BUILTIN\Administrators:(OI)(CI)(F)
+                           CREATOR OWNER:(OI)(CI)(IO)(F)
+                           DESKTOP-DLJ4NEM\kongji:(OI)(CI)(F)
+
+Successfully processed 1 files; Failed processing 0 files
+]]> </Data> 
+<Comment> 
+[양호] : 로그 디렉토리의 접근권한에 Everyone 권한이 없는 경우 
+[취약] : 로그 디렉토리의 접근권한에 Everyone 권한이 있는 경우 
+[권한 약어] 
+N - 없음 
+R - 읽기 
+W - 쓰기 
+C - 바꾸기(쓰기) 
+F - 모든 권한 
+. 
+[상속 약어] 
+CI - Container Inherit. 
+ACE가 디렉터리에 의해 상속됩니다. 
+OI - Object Inherit. 
+ACE가 파일에 의해 상속됩니다. 
+IO - Inherit Only. 
+ACE가 현재 파일/디렉터리에 적용되지 않습니다. 
+ID - Inherited. 
+ACE가 부모 디렉터리의 ACL에서 상속되었습니다. 
+</Comment> 
+<Result> 
+[양호] : 로그 디렉토리의 접근권한에 Everyone 권한이 없는 경우 
+</Result>.txt 
+</W-55> 
+ 
+<W-56> 
+<Name> DoS 공격 방어 레지스트리 설정 </Name> 
+<Security_Threat> 
+DoS 방어 레지스트리를 설정하지 않은 경우, DoS 공격에 의한 시스템 다운 
+으로 서비스 제공이 중단될 수 있음 
+</Security_Threat> 
+<Data> <![CDATA[ 
+#reg query HKLM\System\CurrentControlSet\Services\Tcpip\Parameters\ /s | find /i "SynAttackProtect" 
+ 
+#reg query HKLM\System\CurrentControlSet\Services\Tcpip\Parameters\ /s | find /i "EnableDeadGWDetect" 
+ 
+#reg query HKLM\System\CurrentControlSet\Services\Tcpip\Parameters\ /s | find /i "KeepAliveTime" 
+ 
+#reg query HKLM\System\CurrentControlSet\Services\Tcpip\Parameters\ /s | find /i "NoNameReleaseOnDemand" 
+ 
+]]> </Data> 
+<Comment> 
+[양호] : DoS 방어 레지스트리 값이 아래와 같이 설정되어 있는 경우 
+[취약] : DoS 방어 레지스트리 값이 아래와 같이 설정되어 있지 않은 경우 
+? SynAttackProtect = REG_DWORD 0(False) - 1 이상 
+? EnableDeadGWDetect = REG_DWORD 1(True) - 0 
+? KeepAliveTime = REG_DWORD 7,200,000(2시간) - 300,000(5분) 
+? NoNameReleaseOnDemand = REG_DWORD 0(False) - 1 
+</Comment> 
+<Result> 
+[취약] : DoS 방어 레지스트리 값이 아래와 같이 설정되어 있지 않은 경우 	
+</Result> 
+</W-56> 
+ 
+<W-57> 
+<Name> 사용자가 프린터 드라이버를 설치할 수 없게 함 </Name> 
+<Security_Threat> 
+-서버에 프린터 드라이버를 설치하는 경우 악의적인 사용자가 고의적으로 
+잘못된 프린터 드라이버를 설치하여 컴퓨터를 손상시킬 수 있으며, 프린터 
+드라이버로 위장한 악성 코드를 설치할 수 있음 
+</Security_Threat> 
+<Data> <![CDATA[ 
+#reg query "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Print\Providers\LanMan Print Services\Servers" /v "AddPrinterDrivers" | find "AddPrinterDrivers" 
+ 
+    AddPrinterDrivers    REG_DWORD    0x1
+]]> </Data> 
+<Comment> 
+[양호] : “사용자가 프린터 드라이버를 설치할 수 없게 함” 정책 
+[취약] : “사용자가 프린터 드라이버를 설치할 수 없게 함” 정책이 “사용 안 함”인 경우 
+AddPrinterDrivers 0x0 = 사용 안함 
+AddPrinterDrivers 0x1 = 사용 
+</Comment> 
+<Result> 
+[양호] : “사용자가 프린터 드라이버를 설치할 수 없게 함” 정책 
+</Result> 
+</W-57> 
+ 
+<W-58> 
+<Name> 세션 연결을 중단하기 전에 필요한 유휴시간 </Name>  
+<Security_Threat> 
+-SMB 세션에서는 서버 리소스를 사용하며, null(공백) 세션수가 많으면 서버 
+속도가 느려지거나 서버에 오류를 발생시킬 수 있으므로 공격자는 이를 
+악용하여 SMB 세션을 반복 설정하여 서버의 SMB 서비스가 느려지거나 응답 
+하지 않게 하여 서비스 거부 공격을 실행 할 수 있음 
+</Security_Threat> 
+<Data> <![CDATA[ 
+#reg query "enableforcedlogoff" 
+ 
+
+HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\LanmanServer\Parameters
+    enableforcedlogoff    REG_DWORD    0x1
+
+#reg query "autodisconnect" 
+ 
+
+HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\LanmanServer\Parameters
+    autodisconnect    REG_DWORD    0xf
+
+]]> </Data> 
+ 
+<Result> 
+<Comment> 
+[양호] : “로그온 시간이 만료되면 클라이언트 연결 끊기” 정책을 “사용”으로, “세션 연결을 중단하기 전에 필요한 유휴 시간” 정책을 “15분”으로 설정한 경우 
+[취약] : “세션 연결을 중단하기 전에 필요한 유휴 시간” 정책이 “15분”으로설정 되어 있지 않은 경우 
+enableforcedlogoff = 0x0 사용 안함 
+enableforcedlogoff = 0x1 사용 
+autodisconnect 시간 
+</Comment> 
+[양호] : “로그온 시간이 만료되면 클라이언트 연결 끊기” 정책을 “사용”으로, “세션 연결을 중단하기 전에 필요한 유휴 시간” 정책을 “15분”으로 설정한 경우 
+</Result> 
+</W-58> 
+ 
+<W-59> 
+<Name> 경고 메시지 설정 </Name>  
+<Security_Threat> 
+로그온 경고 메시지가 없는 경우 악의적인 사용자에게 관리자가 적절한 
+보안수준으로 시스템을 보호하고 있으며, 공격자의 활동을 주시하고 있다는 
+생각을 상기 시킬 수 없어 간접적인 공격 기회를 제공할 우려 있음 
+</Security_Threat> 
+<Data> <![CDATA[ 
+reg query "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" /s | find /i "Legalnoticetext" 
+ 
+reg query "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" /s | find /i "Legalnoticecaption" 
+ 
+]]> </Data> 
+<Comment> 
+[양호] : 로그인 경고 메시지 제목 및 내용이 설정되어 있는 경우 
+[취약] : 로그인 경고 메시지 제목 및 내용이 설정되어 있지 않은 경우 
+*Legalnoticetext = 1,"경고 메시지 내용" 
+*Legalnoticecaption = 1,"경고 메시지 제목" 
+*경고문이 한글로 작성되어 있다면 깨져서 보일 수 있으므로 양호 
+</Comment> 
+<Result> 
+[취약] : 로그인 경고 메시지 제목 및 내용이 설정되어 있지 않은 경우 
+</Result> 
+</W-59> 
+ 
+<W-60> 
+<Name> 사용자별 홈 디렉토리 권한 설정 </Name> 
+<Security_Threat> 
+</Security_Threat> 
+<Data> <![CDATA[ 
+2021-07-19  ?? 03:24    <DIR>          kongj
+]]> </Data> 
+<Comment> 
+[양호] : 홈 디렉토리에 Everyone 권한이 없는 경우 (All Users, Default User 디렉토리 제외) 
+[취약] : 홈 디렉토리에 Everyone 권한이 있는 경우 
+</Comment> 
+<Result> 
+[양호] : 홈 디렉토리에 Everyone 권한이 없는 경우 (All Users, Default User 디렉토리 제외) 
+</Result> 
+</W-60> 
+ 
+<W-61> 
+<Name> LAN Manager 인증 수준 </Name> 
+<Security_Threat>
+-안전하지 않은 LAN Manager 인증 수준을 사용하는 경우 인증 트래픽을 
+가로채기를 통해 악의적인 계정 정보 노출을 허용할 수 있음 
+</Security_Threat>
+<Data> <![CDATA[ 
+#reg query "LmCompatibilityLevel" 
+ 
+
+HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Lsa
+    LmCompatibilityLevel    REG_DWORD    0x3
+
+]]> </Data> 
+<Comment> 
+[양호] : "LAN Manager 인증 수준" 정책에 "NTLMv2 응답만 보냄"이 설정 되어 있는 경우 
+[취약] : "LAN Manager 인증 수준" 정책에 "LM" 및 "NTLM"인증이 설정되어 있는 경우 
+LmCompatibilityLevel 0x0 = LM 및 NTLM 응답 보내기 
+LmCompatibilityLevel 0x1 = LM 및 NTLM 응답 보내기-협상되면 NTLMv2 세션 보안 사용 
+LmCompatibilityLevel 0x2 = NTLM 응답만 보내기 
+LmCompatibilityLevel 0x3 = NTLMv2 응답만 보내기 
+LmCompatibilityLevel 0x4 = NTLMv2 응답만 보내기 및 LM 거부 
+LmCompatibilityLevel 0x5 = NTLMv2 응답만 보내기, LM 및 NTLM 거부 
+</Comment> 
+<Result> 
+[양호] : "LAN Manager 인증 수준" 정책에 "NTLMv2 응답만 보냄"이 설정 되어 있는 경우 
+</Result> 
+</W-61> 
+ 
+<W-62> 
+<Name> 보안 채널 데이터 디지털 암호화 또는 서명 </Name> 
+<Security_Threat> 
+-보안 채널이 암호화 되지 않은 경우 인증 트래픽 끼어들기 공격, 반복 공격 
+및 기타 유형의 네트워크 공격 등의 위험 존재 
+</Security_Threat> 
+<Data> <![CDATA[ 
+#reg query "RequireSignOrSeal" 
+  
+    RequireSignOrSeal    REG_DWORD    0x1
+#reg query "SealSecureChannel" 
+ 
+    SealSecureChannel    REG_DWORD    0x1
+#reg query "SignSecureChannel" 
+ 
+    SignSecureChannel    REG_DWORD    0x1
+]]> </Data> 
+<Comment> 
+[양호] : 아래 3가지 정책이 "사용"으로 되어 있는 경우 
+[취약] : 아래 3가지 정책이 "사용 안 함" 으로 되어 있는 경우 
+- 도메인 구성원: 보안 채널 데이터를 디지털 암호화 또는 서명(항상) 
+- 도메인 구성원: 보안 채널 데이터를 디지털 암호화(가능한 경우) 
+- 도메인 구성원: 보안 채널 데이터 디지털 서명(가능한 경우) 
+RequireSignOrSeal 도메인 구성원: 보안 채널 데이터를 디지털 암호화 또는 서명(항상) 0x0 = 사용 안함 
+RequireSignOrSeal 도메인 구성원: 보안 채널 데이터를 디지털 암호화 또는 서명(항상) 0x1 = 사용 
+SealSecureChannel 도메인 구성원: 보안 채널 데이터를 디지털 암호화(가능한 경우) 0x0 = 사용 안함 
+SealSecureChannel 도메인 구성원: 보안 채널 데이터를 디지털 암호화(가능한 경우) 0x1 = 사용 
+SignSecureChannel 도메인 구성원: 보안 채널 데이터를 디지털 서명(가능한 경우) 0x0 = 사용 안함 
+SignSecureChannel 도메인 구성원: 보안 채널 데이터를 디지털 서명(가능한 경우) 0x1 = 사용 
+</Comment> 
+<Result> 
+[양호] : 아래 3가지 정책이 "사용"으로 되어 있는 경우 
+</Result> 
+</W-62> 
+ 
+<W-63> 
+<Name> 파일 및 디렉토리 보호 </Name> 
+<Security_Threat> 
+-FAT 파일 시스템 사용 시 사용자별 접근 통제를 적용할 수 없어 중요 정보에 
+대한 책임 추적성 확보가 어려움 
+</Security_Threat> 
+<Data> <![CDATA[ 
+#fsutil fsinfo drives 
+ 
+C:\ 
+#fsutil fsinfo volumeInfo drives | find "File System Name" 
+ 
+File System Name : NTFS
+]]> </Data> 
+<Comment> 
+[양호] : NTFS 파일 시스템을 사용하는 경우 
+[취약] : FAT파일 시스템을 사용하는 경우 
+</Comment> 
+<Result> 
+[양호] : NTFS 파일 시스템을 사용하는 경우 
+</Result> 
+</W-63> 
+ 
+<W-64> 
+<Name> 컴퓨터 계정 암호 최대 사용 기간 </Name> 
+<Security_Threat> 
+-기본적으로 도메인 구성원은 도메인 암호 변경 주기가 적절하지 않은 경우 
+공격자가 무단 공격을 실행하여 하나 이상의 컴퓨터 계정 암호를 추측하기에 
+충분한 시간을 제공할 수 있음 
+</Security_Threat> 
+<Data> <![CDATA[ 
+#reg query "DisablePasswordChange" 
+ 
+    DisablePasswordChange    REG_DWORD    0x0
+#reg query "MaximumPasswordAge" 
+ 
+    MaximumPasswordAge    REG_DWORD    0x1e
+]]> </Data> 
+<Comment> 
+[양호] : "컴퓨터 계정 암호 변경 사용 안 함" 정책을 사용하지 않으며, "컴퓨터 계정 암호 최대 사용 기간" 정책이 "90일"로 설정되어 있는 경우 
+[취약] : "컴퓨터 계정 암호 변경 사용 안 함" 정책이 “사용”으로 설정되어 있거나 "컴퓨터 계정 암호 최대 사용 기간" 정책이 “90일” 로 설정되어 있지않은 경우 
+DisablePasswordChange 0x0 = 사용 안함 
+DisablePasswordChange 0x1 = 사용 
+MaximumPasswordAge 기간 
+</Comment> 
+<Result> 
+[양호] : "컴퓨터 계정 암호 변경 사용 안 함" 정책을 사용하지 않으며, "컴퓨터 계정 암호 최대 사용 기간" 정책이 "90일"로 설정되어 있는 경우 
+</Result> 
+</W-64> 
+ 
+<W-65> 
+<Name> 시작프로그램 목록 분석 </Name> 
+<Security_Threat> 
+-윈도우 부팅 시 너무 많은 시작프로그램이 동시에 실행되면 속도가 저하되는 
+문제가 발생하며, 공격자가 심어놓은 악성 프로그램이나 해킹 툴이 실행되어 
+시스템에 피해를 줄 수 있음 
+</Security_Threat> 
+<Data> <![CDATA[ 
+<개인 사용자 지속용 시작 프로그램 레지스트리(해당 사용자 계정으로 로그온 시 매번 실행됨)> 
+#reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run" /s 
+ 
+
+HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run
+    OneDrive    REG_SZ    "C:\Program Files\Microsoft OneDrive\OneDrive.exe" /background
+    KakaoTalk    REG_SZ    "C:\Program Files (x86)\Kakao\KakaoTalk\KakaoTalk.exe" -bystartup
+    CrossEXService    REG_SZ    C:\Program Files (x86)\iniLINE\CrossEX\crossex\CrossEXService.exe
+    com.squirrel.slack.slack    REG_SZ    "C:\Users\kongj\AppData\Local\slack\slack.exe" --process-start-args --startup
+
+ 
+<개인 사용자 일회용 시작 프로그램 레지스트리(해당 사용자 계정으로 로그온 시 한번 실행 후 삭제됨)> 
+#reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\RunOnce" /s 
+ 
+
+ 
+<전체 사용자 지속용 시작 프로그램 레지스트리(로그온 시 매번 실행됨)> 
+#reg query "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Run" /s 
+ 
+
+HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Run
+    SecurityHealth    REG_EXPAND_SZ    %ProgramFiles%\Windows Defender\MSASCuiL.exe
+    cAudioFilterAgent    REG_SZ    "C:\Program Files\Conexant\cAudioFilterAgent\cAudioFilterAgent64.exe"
+    SmartAudio    REG_SZ    C:\Program Files\CONEXANT\SAII\SACpl.exe /c /delay:60
+    wizvera-veraport-x64    REG_SZ    "C:\Program Files\Wizvera\Veraport20\veraport-x64.exe" wizvera-veraport://exec/x86/16105/
+    AhnLab Safe Transaction Application    REG_SZ    "C:\Program Files\AhnLab\Safe Transaction\stsess.exe" /tray
+
+ 
+<전체 사용자 일회용 시작 프로그램 레지스트리(다음 로그온 시 한번 실행 후 삭제됨)> 
+# reg query "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\RunOnce" /s 
+ 
+
+HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\RunOnce
+    !GetCurrentRollback    REG_SZ    "C:\Windows10Upgrade\GetCurrentRollback.exe" "progress.ini" "C:" "NHV25:<1.4.9200.23214>:<3>"
+
+ 
+]]> </Data>  
+<Comment> 
+[양호] : 시작프로그램 목록을 정기적으로 검사하고 불필요한 서비스 체크해제를한 경우 
+[취약] : 시작프로그램 목록을 정기적으로 검사하지 않고, 부팅 시 불필요한 서비스도 실행되고 있는 경우 
+</Comment> 
+<Result> 
+[인터뷰] 시작프로그램 목록에 불필요한 서비스 있는지 확인 
+</Result> 
+</W-65> 
+</Windows> 
